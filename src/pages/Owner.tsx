@@ -7,6 +7,12 @@ import { useToast } from '@/hooks/use-toast';
 import { LogOut, Shield, Mail, Trash2, TrendingUp, Users, Eye } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay, startOfWeek, startOfMonth } from 'date-fns';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface ContactMessage {
   id: string;
@@ -223,179 +229,205 @@ const Owner = () => {
           </div>
         </div>
 
-        {/* Statistics Section */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <div className="glass rounded-xl p-6 space-y-2">
-            <div className="flex items-center gap-2">
-              <Eye className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-semibold text-foreground">Total Visits</h3>
-            </div>
-            <p className="text-3xl font-bold text-primary">{analyticsLoading ? '...' : stats.totalVisits}</p>
-            <p className="text-sm text-muted-foreground">All time page views</p>
-          </div>
-
-          <div className="glass rounded-xl p-6 space-y-2">
-            <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-semibold text-foreground">Unique Visitors</h3>
-            </div>
-            <p className="text-3xl font-bold text-primary">{analyticsLoading ? '...' : stats.uniqueVisitors}</p>
-            <p className="text-sm text-muted-foreground">Distinct visitors</p>
-          </div>
-
-          <div className="glass rounded-xl p-6 space-y-2">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-semibold text-foreground">Today</h3>
-            </div>
-            <p className="text-3xl font-bold text-primary">{analyticsLoading ? '...' : stats.todayVisits}</p>
-            <p className="text-sm text-muted-foreground">Visits today</p>
-          </div>
-
-          <div className="glass rounded-xl p-6 space-y-2">
-            <h3 className="text-lg font-semibold text-foreground">This Week</h3>
-            <p className="text-3xl font-bold text-primary">{analyticsLoading ? '...' : stats.weekVisits}</p>
-            <p className="text-sm text-muted-foreground">Last 7 days</p>
-          </div>
-
-          <div className="glass rounded-xl p-6 space-y-2">
-            <h3 className="text-lg font-semibold text-foreground">This Month</h3>
-            <p className="text-3xl font-bold text-primary">{analyticsLoading ? '...' : stats.monthVisits}</p>
-            <p className="text-sm text-muted-foreground">Current month</p>
-          </div>
-
-          <div className="glass rounded-xl p-6 space-y-2">
-            <div className="flex items-center gap-2">
-              <Mail className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-semibold text-foreground">Messages</h3>
-            </div>
-            <p className="text-3xl font-bold text-primary">{messages.length}</p>
-            <p className="text-sm text-muted-foreground">Contact forms</p>
-          </div>
-        </div>
-
-        {/* Analytics Charts Section */}
-        {!analyticsLoading && visits.length > 0 && (
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Daily Visits Chart */}
-            <div className="glass rounded-2xl p-8 space-y-6">
-              <div className="flex items-center gap-3 border-b border-border pb-4">
+        {/* Collapsible Sections */}
+        <Accordion type="multiple" defaultValue={["statistics", "analytics", "messages"]} className="space-y-6">
+          {/* Statistics Section */}
+          <AccordionItem value="statistics" className="glass rounded-2xl border-0">
+            <AccordionTrigger className="px-8 pt-8 pb-4 hover:no-underline">
+              <div className="flex items-center gap-3">
                 <TrendingUp className="w-6 h-6 text-primary" />
-                <h2 className="text-2xl font-bold text-foreground">Visit Trends</h2>
+                <h2 className="text-2xl font-bold text-foreground">Statistics</h2>
               </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={getDailyVisitsData()}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis 
-                    dataKey="date" 
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                  />
-                  <YAxis 
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--background))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="visits" 
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={2}
-                    dot={{ fill: 'hsl(var(--primary))' }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Popular Pages Chart */}
-            <div className="glass rounded-2xl p-8 space-y-6">
-              <div className="flex items-center gap-3 border-b border-border pb-4">
-                <Eye className="w-6 h-6 text-primary" />
-                <h2 className="text-2xl font-bold text-foreground">Popular Pages</h2>
-              </div>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={getPopularPagesData()}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis 
-                    dataKey="page" 
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                  />
-                  <YAxis 
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--background))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Bar 
-                    dataKey="visits" 
-                    fill="hsl(var(--primary))" 
-                    radius={[8, 8, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-
-        {/* Contact Messages Section */}
-        <div className="glass rounded-2xl p-8 space-y-6">
-          <div className="flex items-center gap-3 border-b border-border pb-4">
-            <Mail className="w-6 h-6 text-primary" />
-            <h2 className="text-2xl font-bold text-foreground">Contact Messages</h2>
-          </div>
-          
-          {messagesLoading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-4 text-muted-foreground">Loading messages...</p>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="text-center py-12">
-              <Mail className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <p className="text-lg text-muted-foreground">No messages yet.</p>
-              <p className="text-sm text-muted-foreground mt-2">Messages from your contact form will appear here.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {messages.map((msg) => (
-                <div key={msg.id} className="glass rounded-xl p-6 space-y-3 hover:glass-strong transition-all duration-300">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1 flex-1">
-                      <h3 className="font-semibold text-lg text-foreground">{msg.name}</h3>
-                      <p className="text-sm text-primary">{msg.email}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(msg.created_at), 'PPpp')}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteMessage(msg.id)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="glass rounded-xl p-6 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Eye className="w-5 h-5 text-primary" />
+                    <h3 className="text-lg font-semibold text-foreground">Total Visits</h3>
                   </div>
-                  <div className="pt-3 border-t border-border">
-                    <p className="text-foreground whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                  <p className="text-3xl font-bold text-primary">{analyticsLoading ? '...' : stats.totalVisits}</p>
+                  <p className="text-sm text-muted-foreground">All time page views</p>
+                </div>
+
+                <div className="glass rounded-xl p-6 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-primary" />
+                    <h3 className="text-lg font-semibold text-foreground">Unique Visitors</h3>
+                  </div>
+                  <p className="text-3xl font-bold text-primary">{analyticsLoading ? '...' : stats.uniqueVisitors}</p>
+                  <p className="text-sm text-muted-foreground">Distinct visitors</p>
+                </div>
+
+                <div className="glass rounded-xl p-6 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-primary" />
+                    <h3 className="text-lg font-semibold text-foreground">Today</h3>
+                  </div>
+                  <p className="text-3xl font-bold text-primary">{analyticsLoading ? '...' : stats.todayVisits}</p>
+                  <p className="text-sm text-muted-foreground">Visits today</p>
+                </div>
+
+                <div className="glass rounded-xl p-6 space-y-2">
+                  <h3 className="text-lg font-semibold text-foreground">This Week</h3>
+                  <p className="text-3xl font-bold text-primary">{analyticsLoading ? '...' : stats.weekVisits}</p>
+                  <p className="text-sm text-muted-foreground">Last 7 days</p>
+                </div>
+
+                <div className="glass rounded-xl p-6 space-y-2">
+                  <h3 className="text-lg font-semibold text-foreground">This Month</h3>
+                  <p className="text-3xl font-bold text-primary">{analyticsLoading ? '...' : stats.monthVisits}</p>
+                  <p className="text-sm text-muted-foreground">Current month</p>
+                </div>
+
+                <div className="glass rounded-xl p-6 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-5 h-5 text-primary" />
+                    <h3 className="text-lg font-semibold text-foreground">Messages</h3>
+                  </div>
+                  <p className="text-3xl font-bold text-primary">{messages.length}</p>
+                  <p className="text-sm text-muted-foreground">Contact forms</p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Analytics Charts Section */}
+          {!analyticsLoading && visits.length > 0 && (
+            <AccordionItem value="analytics" className="glass rounded-2xl border-0">
+              <AccordionTrigger className="px-8 pt-8 pb-4 hover:no-underline">
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="w-6 h-6 text-primary" />
+                  <h2 className="text-2xl font-bold text-foreground">Analytics Charts</h2>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-8 pb-8">
+                <div className="grid gap-6 lg:grid-cols-2">
+                  {/* Daily Visits Chart */}
+                  <div className="glass rounded-2xl p-8 space-y-6">
+                    <div className="flex items-center gap-3 border-b border-border pb-4">
+                      <TrendingUp className="w-6 h-6 text-primary" />
+                      <h2 className="text-2xl font-bold text-foreground">Visit Trends</h2>
+                    </div>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={getDailyVisitsData()}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis 
+                          dataKey="date" 
+                          stroke="hsl(var(--muted-foreground))"
+                          fontSize={12}
+                        />
+                        <YAxis 
+                          stroke="hsl(var(--muted-foreground))"
+                          fontSize={12}
+                        />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--background))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="visits" 
+                          stroke="hsl(var(--primary))" 
+                          strokeWidth={2}
+                          dot={{ fill: 'hsl(var(--primary))' }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Popular Pages Chart */}
+                  <div className="glass rounded-2xl p-8 space-y-6">
+                    <div className="flex items-center gap-3 border-b border-border pb-4">
+                      <Eye className="w-6 h-6 text-primary" />
+                      <h2 className="text-2xl font-bold text-foreground">Popular Pages</h2>
+                    </div>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={getPopularPagesData()}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis 
+                          dataKey="page" 
+                          stroke="hsl(var(--muted-foreground))"
+                          fontSize={12}
+                        />
+                        <YAxis 
+                          stroke="hsl(var(--muted-foreground))"
+                          fontSize={12}
+                        />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--background))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        <Bar 
+                          dataKey="visits" 
+                          fill="hsl(var(--primary))" 
+                          radius={[8, 8, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
-              ))}
-            </div>
+              </AccordionContent>
+            </AccordionItem>
           )}
-        </div>
+
+          {/* Contact Messages Section */}
+          <AccordionItem value="messages" className="glass rounded-2xl border-0">
+            <AccordionTrigger className="px-8 pt-8 pb-4 hover:no-underline">
+              <div className="flex items-center gap-3">
+                <Mail className="w-6 h-6 text-primary" />
+                <h2 className="text-2xl font-bold text-foreground">Contact Messages</h2>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8">
+              {messagesLoading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-4 text-muted-foreground">Loading messages...</p>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="text-center py-12">
+                  <Mail className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                  <p className="text-lg text-muted-foreground">No messages yet.</p>
+                  <p className="text-sm text-muted-foreground mt-2">Messages from your contact form will appear here.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {messages.map((msg) => (
+                    <div key={msg.id} className="glass rounded-xl p-6 space-y-3 hover:glass-strong transition-all duration-300">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1 flex-1">
+                          <h3 className="font-semibold text-lg text-foreground">{msg.name}</h3>
+                          <p className="text-sm text-primary">{msg.email}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(msg.created_at), 'PPpp')}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteMessage(msg.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="pt-3 border-t border-border">
+                        <p className="text-foreground whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
     </div>
   );
