@@ -15,7 +15,7 @@ const Hero = () => {
       <div className="max-w-4xl mx-auto text-center fade-in-up">
         <div className="mb-8 flex justify-center">
           <div className="glass rounded-full p-2">
-            <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-primary glow-primary">
+            <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-primary border-blink">
               <img
                 src={profileImage}
                 alt="Profile"
