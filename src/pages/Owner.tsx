@@ -54,6 +54,7 @@ const Owner = () => {
     weekVisits: 0,
     monthVisits: 0,
   });
+  const [openSections, setOpenSections] = useState<string[]>(["analytics", "messages"]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -171,6 +172,14 @@ const Owner = () => {
     navigate('/');
   };
 
+  const toggleSection = (section: string) => {
+    setOpenSections(prev => 
+      prev.includes(section) 
+        ? prev.filter(s => s !== section)
+        : [...prev, section]
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -229,8 +238,30 @@ const Owner = () => {
           </div>
         </div>
 
+        {/* Section Navigation */}
+        <div className="glass rounded-2xl p-6">
+          <div className="flex gap-4 flex-wrap">
+            <Button
+              variant={openSections.includes("analytics") ? "default" : "outline"}
+              onClick={() => toggleSection("analytics")}
+              className="flex items-center gap-2"
+            >
+              <TrendingUp className="w-4 h-4" />
+              Analytics & Statistics
+            </Button>
+            <Button
+              variant={openSections.includes("messages") ? "default" : "outline"}
+              onClick={() => toggleSection("messages")}
+              className="flex items-center gap-2"
+            >
+              <Mail className="w-4 h-4" />
+              Contact Messages
+            </Button>
+          </div>
+        </div>
+
         {/* Collapsible Sections */}
-        <Accordion type="multiple" defaultValue={["analytics", "messages"]} className="space-y-6">
+        <Accordion type="multiple" value={openSections} onValueChange={setOpenSections} className="space-y-6">
           {/* Analytics Section (Statistics + Charts) */}
           <AccordionItem value="analytics" className="glass rounded-2xl border-0">
             <AccordionTrigger className="px-8 pt-8 pb-4 hover:no-underline">
