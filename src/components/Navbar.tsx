@@ -31,13 +31,18 @@ const Navbar = () => {
             ))}
           </div>
         </div>
-        <Button
-          size="sm"
-          className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium hover-glow-primary rounded-full"
+        <a
+          href="/Harsh_Kumar_Resume.jpg"
+          download="Harsh_Kumar_Resume.jpg"
         >
-          <Download className="w-4 h-4 mr-2" />
-          Resume
-        </Button>
+          <Button
+            size="sm"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium hover-glow-primary rounded-full"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Resume
+          </Button>
+        </a>
       </div>
     </nav>
   );
