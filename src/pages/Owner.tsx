@@ -114,8 +114,9 @@ const Owner = () => {
 
   return (
     <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="glass rounded-2xl p-8 space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header Section */}
+        <div className="glass rounded-2xl p-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
@@ -131,70 +132,75 @@ const Owner = () => {
               Logout
             </Button>
           </div>
+        </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <div className="glass rounded-xl p-6 space-y-2">
-              <h3 className="text-lg font-semibold text-foreground">Statistics</h3>
-              <p className="text-3xl font-bold text-primary">0</p>
-              <p className="text-sm text-muted-foreground">Total Users</p>
-            </div>
-
-            <div className="glass rounded-xl p-6 space-y-2">
-              <h3 className="text-lg font-semibold text-foreground">Content</h3>
-              <p className="text-3xl font-bold text-primary">0</p>
-              <p className="text-sm text-muted-foreground">Total Projects</p>
-            </div>
-
-            <div className="glass rounded-xl p-6 space-y-2">
-              <h3 className="text-lg font-semibold text-foreground">Messages</h3>
-              <p className="text-3xl font-bold text-primary">{messages.length}</p>
-              <p className="text-sm text-muted-foreground">Contact Forms</p>
-            </div>
+        {/* Statistics Section */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="glass rounded-xl p-6 space-y-2">
+            <h3 className="text-lg font-semibold text-foreground">Statistics</h3>
+            <p className="text-3xl font-bold text-primary">0</p>
+            <p className="text-sm text-muted-foreground">Total Users</p>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-                <Mail className="w-5 h-5" />
-                Contact Messages
-              </h2>
+          <div className="glass rounded-xl p-6 space-y-2">
+            <h3 className="text-lg font-semibold text-foreground">Content</h3>
+            <p className="text-3xl font-bold text-primary">0</p>
+            <p className="text-sm text-muted-foreground">Total Projects</p>
+          </div>
+
+          <div className="glass rounded-xl p-6 space-y-2">
+            <h3 className="text-lg font-semibold text-foreground">Messages</h3>
+            <p className="text-3xl font-bold text-primary">{messages.length}</p>
+            <p className="text-sm text-muted-foreground">Contact Forms</p>
+          </div>
+        </div>
+
+        {/* Contact Messages Section */}
+        <div className="glass rounded-2xl p-8 space-y-6">
+          <div className="flex items-center gap-3 border-b border-border pb-4">
+            <Mail className="w-6 h-6 text-primary" />
+            <h2 className="text-2xl font-bold text-foreground">Contact Messages</h2>
+          </div>
+          
+          {messagesLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">Loading messages...</p>
             </div>
-            
-            {messagesLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="glass rounded-xl p-8 text-center">
-                <p className="text-muted-foreground">No messages yet.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {messages.map((msg) => (
-                  <div key={msg.id} className="glass rounded-xl p-6 space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <h3 className="font-semibold text-foreground">{msg.name}</h3>
-                        <p className="text-sm text-muted-foreground">{msg.email}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(msg.created_at), 'PPpp')}
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteMessage(msg.id)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+          ) : messages.length === 0 ? (
+            <div className="text-center py-12">
+              <Mail className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+              <p className="text-lg text-muted-foreground">No messages yet.</p>
+              <p className="text-sm text-muted-foreground mt-2">Messages from your contact form will appear here.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {messages.map((msg) => (
+                <div key={msg.id} className="glass rounded-xl p-6 space-y-3 hover:glass-strong transition-all duration-300">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1 flex-1">
+                      <h3 className="font-semibold text-lg text-foreground">{msg.name}</h3>
+                      <p className="text-sm text-primary">{msg.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(msg.created_at), 'PPpp')}
+                      </p>
                     </div>
-                    <p className="text-foreground whitespace-pre-wrap">{msg.message}</p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteMessage(msg.id)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  <div className="pt-3 border-t border-border">
+                    <p className="text-foreground whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
