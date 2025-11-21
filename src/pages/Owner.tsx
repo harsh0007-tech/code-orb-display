@@ -169,8 +169,8 @@ const Owner = () => {
   const toggleSection = (section: string) => {
     setOpenSections(prev => 
       prev.includes(section) 
-        ? prev.filter(s => s !== section)
-        : [...prev, section]
+        ? [] // Close if already open
+        : [section] // Open only this section, closing others
     );
   };
 
