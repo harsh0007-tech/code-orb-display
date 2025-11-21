@@ -346,30 +346,6 @@ const Owner = () => {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-
-            {/* Recent Visitors */}
-            <div className="glass rounded-2xl p-8 space-y-6 lg:col-span-2">
-              <div className="flex items-center gap-3 border-b border-border pb-4">
-                <Users className="w-6 h-6 text-primary" />
-                <h2 className="text-2xl font-bold text-foreground">Recent Visitors</h2>
-              </div>
-              <div className="space-y-3">
-                {visits.slice(0, 20).map((visit) => (
-                  <div key={visit.id} className="glass rounded-lg p-4 flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="font-medium text-foreground">{visit.page_path}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(visit.created_at), 'PPp')}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">From: {visit.referrer}</p>
-                      <p className="text-xs text-muted-foreground">ID: {visit.visitor_id.slice(0, 12)}...</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         )}
 
