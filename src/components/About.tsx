@@ -9,7 +9,7 @@ const About = () => {
             </h2>
             <div className="space-y-4 text-muted-foreground leading-relaxed">
               <p>
-                I'm a passionate <span className="text-foreground font-semibold">Fullstack Developer</span> currently pursuing my B.Tech in Computer Science. 
+                I'm <span className="text-foreground font-semibold">Harsh Kumar</span>, a passionate Full Stack Web Developer currently pursuing my B.Tech in Computer Science. 
                 I thrive on transforming complex problems into elegant, user-friendly solutions.
               </p>
               <p>
@@ -42,7 +42,11 @@ const About = () => {
                   </div>
                   <div className="pl-4">
                     <span className="text-accent">name</span>:{" "}
-                    <span className="text-secondary">"Fullstack Developer"</span>,
+                    <span className="text-secondary">"Harsh Kumar"</span>,
+                  </div>
+                  <div className="pl-4">
+                    <span className="text-accent">role</span>:{" "}
+                    <span className="text-secondary">"Full Stack Web Developer"</span>,
                   </div>
                   <div className="pl-4">
                     <span className="text-accent">education</span>:{" "}
