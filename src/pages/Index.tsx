@@ -11,9 +11,9 @@ const Index = () => {
       <BackgroundOrbs />
       <Navbar />
       <Hero />
+      <Projects />
       <About />
       <TechStack />
-      <Projects />
       <Education />
       <Contact />
       
