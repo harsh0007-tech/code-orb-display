@@ -6,10 +6,8 @@ import Projects from "@/components/Projects";
 import Education from "@/components/Education";
 import Contact from "@/components/Contact";
 import BackgroundOrbs from "@/components/BackgroundOrbs";
-
 const Index = () => {
-  return (
-    <div className="relative min-h-screen bg-background">
+  return <div className="relative min-h-screen bg-background">
       <BackgroundOrbs />
       <Navbar />
       <Hero />
@@ -21,11 +19,9 @@ const Index = () => {
       
       <footer className="py-8 px-6 text-center text-muted-foreground border-t border-border/50">
         <p className="font-mono">
-          © 2024 Harsh Kumar · Built with 💙 using React & Tailwind
+          © 2024 Harsh Kumar · Built with 💙 using Reac    
         </p>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
