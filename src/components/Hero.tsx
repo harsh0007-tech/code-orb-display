@@ -32,10 +32,10 @@ const Hero = () => {
         </h1>
         
         <p className="text-xl md:text-2xl text-muted-foreground mb-4">
-          I am a <span className="text-foreground font-semibold">Fullstack Developer</span>
+          I am <span className="text-foreground font-semibold">Harsh Kumar</span>
         </p>
         <p className="text-lg text-muted-foreground mb-12">
-          & B.Tech Computer Science Student
+          Full Stack Web Developer & B.Tech Computer Science Student
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
