@@ -14,99 +14,13 @@ export type Database = {
   }
   public: {
     Tables: {
-      admin_users: {
-        Row: {
-          created_at: string
-          id: string
-          mobile_number: string
-          password_hash: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          mobile_number: string
-          password_hash: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          mobile_number?: string
-          password_hash?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      certificates: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          image_url: string
-          issued_by: string | null
-          issued_date: string | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url: string
-          issued_by?: string | null
-          issued_date?: string | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string
-          issued_by?: string | null
-          issued_date?: string | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      contact_messages: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          message: string
-          name: string
-          subject: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          message: string
-          name: string
-          subject?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          message?: string
-          name?: string
-          subject?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      is_admin: { Args: never; Returns: boolean }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
