@@ -201,6 +201,24 @@ All colors MUST be HSL.
     box-shadow: var(--glow-secondary);
   }
 
+  /* Blinking border animation */
+  @keyframes borderBlink {
+    0%, 100% {
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.8),
+                  0 0 20px rgba(0, 212, 255, 0.6),
+                  0 0 30px rgba(0, 212, 255, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(0, 212, 255, 1),
+                  0 0 40px rgba(0, 212, 255, 0.8),
+                  0 0 60px rgba(0, 212, 255, 0.6);
+    }
+  }
+
+  .border-blink {
+    animation: borderBlink 2s ease-in-out infinite;
+  }
+
   /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
