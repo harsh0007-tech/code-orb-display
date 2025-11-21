@@ -230,16 +230,17 @@ const Owner = () => {
         </div>
 
         {/* Collapsible Sections */}
-        <Accordion type="multiple" defaultValue={["statistics", "analytics", "messages"]} className="space-y-6">
-          {/* Statistics Section */}
-          <AccordionItem value="statistics" className="glass rounded-2xl border-0">
+        <Accordion type="multiple" defaultValue={["analytics", "messages"]} className="space-y-6">
+          {/* Analytics Section (Statistics + Charts) */}
+          <AccordionItem value="analytics" className="glass rounded-2xl border-0">
             <AccordionTrigger className="px-8 pt-8 pb-4 hover:no-underline">
               <div className="flex items-center gap-3">
                 <TrendingUp className="w-6 h-6 text-primary" />
-                <h2 className="text-2xl font-bold text-foreground">Statistics</h2>
+                <h2 className="text-2xl font-bold text-foreground">Analytics & Statistics</h2>
               </div>
             </AccordionTrigger>
-            <AccordionContent className="px-8 pb-8">
+            <AccordionContent className="px-8 pb-8 space-y-8">
+              {/* Statistics Grid */}
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <div className="glass rounded-xl p-6 space-y-2">
                   <div className="flex items-center gap-2">
@@ -289,19 +290,9 @@ const Owner = () => {
                   <p className="text-sm text-muted-foreground">Contact forms</p>
                 </div>
               </div>
-            </AccordionContent>
-          </AccordionItem>
 
-          {/* Analytics Charts Section */}
-          {!analyticsLoading && visits.length > 0 && (
-            <AccordionItem value="analytics" className="glass rounded-2xl border-0">
-              <AccordionTrigger className="px-8 pt-8 pb-4 hover:no-underline">
-                <div className="flex items-center gap-3">
-                  <TrendingUp className="w-6 h-6 text-primary" />
-                  <h2 className="text-2xl font-bold text-foreground">Analytics Charts</h2>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-8 pb-8">
+              {/* Charts Section */}
+              {!analyticsLoading && visits.length > 0 && (
                 <div className="grid gap-6 lg:grid-cols-2">
                   {/* Daily Visits Chart */}
                   <div className="glass rounded-2xl p-8 space-y-6">
@@ -373,9 +364,9 @@ const Owner = () => {
                     </ResponsiveContainer>
                   </div>
                 </div>
-              </AccordionContent>
-            </AccordionItem>
-          )}
+              )}
+            </AccordionContent>
+          </AccordionItem>
 
           {/* Contact Messages Section */}
           <AccordionItem value="messages" className="glass rounded-2xl border-0">
