@@ -4,8 +4,9 @@ import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Shield, Mail, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { LogOut, Shield, Mail, Trash2, TrendingUp, Users, Eye } from 'lucide-react';
+import { format, subDays, startOfDay, endOfDay, startOfWeek, startOfMonth } from 'date-fns';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface ContactMessage {
   id: string;
@@ -15,16 +16,43 @@ interface ContactMessage {
   created_at: string;
 }
 
+interface PageVisit {
+  id: string;
+  visitor_id: string;
+  page_path: string;
+  user_agent: string;
+  referrer: string;
+  created_at: string;
+}
+
+interface AnalyticsStats {
+  totalVisits: number;
+  uniqueVisitors: number;
+  todayVisits: number;
+  weekVisits: number;
+  monthVisits: number;
+}
+
 const Owner = () => {
   const { isAdmin, loading } = useAdminCheck();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(true);
+  const [visits, setVisits] = useState<PageVisit[]>([]);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [stats, setStats] = useState<AnalyticsStats>({
+    totalVisits: 0,
+    uniqueVisitors: 0,
+    todayVisits: 0,
+    weekVisits: 0,
+    monthVisits: 0,
+  });
 
   useEffect(() => {
     if (isAdmin) {
       fetchMessages();
+      fetchAnalytics();
     }
   }, [isAdmin]);
 
@@ -42,6 +70,67 @@ const Owner = () => {
     } finally {
       setMessagesLoading(false);
     }
+  };
+
+  const fetchAnalytics = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('page_visits')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      const visitsData = data || [];
+      setVisits(visitsData);
+
+      // Calculate stats
+      const now = new Date();
+      const todayStart = startOfDay(now);
+      const weekStart = startOfWeek(now);
+      const monthStart = startOfMonth(now);
+
+      const uniqueVisitorIds = new Set(visitsData.map(v => v.visitor_id));
+      
+      setStats({
+        totalVisits: visitsData.length,
+        uniqueVisitors: uniqueVisitorIds.size,
+        todayVisits: visitsData.filter(v => new Date(v.created_at) >= todayStart).length,
+        weekVisits: visitsData.filter(v => new Date(v.created_at) >= weekStart).length,
+        monthVisits: visitsData.filter(v => new Date(v.created_at) >= monthStart).length,
+      });
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  // Prepare chart data
+  const getDailyVisitsData = () => {
+    const last30Days = Array.from({ length: 30 }, (_, i) => {
+      const date = subDays(new Date(), 29 - i);
+      return {
+        date: format(date, 'MMM dd'),
+        visits: visits.filter(v => {
+          const visitDate = new Date(v.created_at);
+          return visitDate >= startOfDay(date) && visitDate <= endOfDay(date);
+        }).length,
+      };
+    });
+    return last30Days;
+  };
+
+  const getPopularPagesData = () => {
+    const pageCounts: Record<string, number> = {};
+    visits.forEach(v => {
+      pageCounts[v.page_path] = (pageCounts[v.page_path] || 0) + 1;
+    });
+    
+    return Object.entries(pageCounts)
+      .map(([page, visits]) => ({ page, visits }))
+      .sort((a, b) => b.visits - a.visits)
+      .slice(0, 5);
   };
 
   const handleDeleteMessage = async (id: string) => {
@@ -137,23 +226,152 @@ const Owner = () => {
         {/* Statistics Section */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <div className="glass rounded-xl p-6 space-y-2">
-            <h3 className="text-lg font-semibold text-foreground">Statistics</h3>
-            <p className="text-3xl font-bold text-primary">0</p>
-            <p className="text-sm text-muted-foreground">Total Users</p>
+            <div className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold text-foreground">Total Visits</h3>
+            </div>
+            <p className="text-3xl font-bold text-primary">{analyticsLoading ? '...' : stats.totalVisits}</p>
+            <p className="text-sm text-muted-foreground">All time page views</p>
           </div>
 
           <div className="glass rounded-xl p-6 space-y-2">
-            <h3 className="text-lg font-semibold text-foreground">Content</h3>
-            <p className="text-3xl font-bold text-primary">0</p>
-            <p className="text-sm text-muted-foreground">Total Projects</p>
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold text-foreground">Unique Visitors</h3>
+            </div>
+            <p className="text-3xl font-bold text-primary">{analyticsLoading ? '...' : stats.uniqueVisitors}</p>
+            <p className="text-sm text-muted-foreground">Distinct visitors</p>
           </div>
 
           <div className="glass rounded-xl p-6 space-y-2">
-            <h3 className="text-lg font-semibold text-foreground">Messages</h3>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold text-foreground">Today</h3>
+            </div>
+            <p className="text-3xl font-bold text-primary">{analyticsLoading ? '...' : stats.todayVisits}</p>
+            <p className="text-sm text-muted-foreground">Visits today</p>
+          </div>
+
+          <div className="glass rounded-xl p-6 space-y-2">
+            <h3 className="text-lg font-semibold text-foreground">This Week</h3>
+            <p className="text-3xl font-bold text-primary">{analyticsLoading ? '...' : stats.weekVisits}</p>
+            <p className="text-sm text-muted-foreground">Last 7 days</p>
+          </div>
+
+          <div className="glass rounded-xl p-6 space-y-2">
+            <h3 className="text-lg font-semibold text-foreground">This Month</h3>
+            <p className="text-3xl font-bold text-primary">{analyticsLoading ? '...' : stats.monthVisits}</p>
+            <p className="text-sm text-muted-foreground">Current month</p>
+          </div>
+
+          <div className="glass rounded-xl p-6 space-y-2">
+            <div className="flex items-center gap-2">
+              <Mail className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold text-foreground">Messages</h3>
+            </div>
             <p className="text-3xl font-bold text-primary">{messages.length}</p>
-            <p className="text-sm text-muted-foreground">Contact Forms</p>
+            <p className="text-sm text-muted-foreground">Contact forms</p>
           </div>
         </div>
+
+        {/* Analytics Charts Section */}
+        {!analyticsLoading && visits.length > 0 && (
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Daily Visits Chart */}
+            <div className="glass rounded-2xl p-8 space-y-6">
+              <div className="flex items-center gap-3 border-b border-border pb-4">
+                <TrendingUp className="w-6 h-6 text-primary" />
+                <h2 className="text-2xl font-bold text-foreground">Visit Trends</h2>
+              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={getDailyVisitsData()}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="visits" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={2}
+                    dot={{ fill: 'hsl(var(--primary))' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Popular Pages Chart */}
+            <div className="glass rounded-2xl p-8 space-y-6">
+              <div className="flex items-center gap-3 border-b border-border pb-4">
+                <Eye className="w-6 h-6 text-primary" />
+                <h2 className="text-2xl font-bold text-foreground">Popular Pages</h2>
+              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={getPopularPagesData()}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="page" 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Bar 
+                    dataKey="visits" 
+                    fill="hsl(var(--primary))" 
+                    radius={[8, 8, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Recent Visitors */}
+            <div className="glass rounded-2xl p-8 space-y-6 lg:col-span-2">
+              <div className="flex items-center gap-3 border-b border-border pb-4">
+                <Users className="w-6 h-6 text-primary" />
+                <h2 className="text-2xl font-bold text-foreground">Recent Visitors</h2>
+              </div>
+              <div className="space-y-3">
+                {visits.slice(0, 20).map((visit) => (
+                  <div key={visit.id} className="glass rounded-lg p-4 flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="font-medium text-foreground">{visit.page_path}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(visit.created_at), 'PPp')}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">From: {visit.referrer}</p>
+                      <p className="text-xs text-muted-foreground">ID: {visit.visitor_id.slice(0, 12)}...</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Contact Messages Section */}
         <div className="glass rounded-2xl p-8 space-y-6">
