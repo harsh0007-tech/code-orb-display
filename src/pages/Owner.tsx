@@ -48,7 +48,7 @@ const Owner = () => {
     weekVisits: 0,
     monthVisits: 0,
   });
-  const [openSections, setOpenSections] = useState<string[]>(["analytics", "messages"]);
+  const [openSections, setOpenSections] = useState<string[]>([]);
 
   useEffect(() => {
     if (isAdmin) {
