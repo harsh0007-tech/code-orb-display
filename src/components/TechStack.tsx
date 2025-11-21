@@ -1,13 +1,11 @@
 const TechStack = () => {
   const technologies = [
     { name: "React", icon: "⚛️", color: "text-primary" },
-    { name: "Node.js", icon: "🟢", color: "text-primary" },
     { name: "TypeScript", icon: "📘", color: "text-primary" },
-    { name: "Python", icon: "🐍", color: "text-secondary" },
-    { name: "SQL", icon: "🗄️", color: "text-accent" },
-    { name: "Tailwind", icon: "🎨", color: "text-primary" },
-    { name: "Git", icon: "📦", color: "text-destructive" },
-    { name: "Docker", icon: "🐳", color: "text-primary" },
+    { name: "Vite", icon: "⚡", color: "text-accent" },
+    { name: "Shadcn-UI", icon: "🎨", color: "text-secondary" },
+    { name: "Tailwind CSS", icon: "💨", color: "text-primary" },
+    { name: "Supabase", icon: "🔥", color: "text-accent" },
   ];
 
   return (
