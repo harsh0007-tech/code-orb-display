@@ -1,13 +1,38 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Github, Linkedin, Twitter, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Contact = () => {
-  const handleSubmit = (e: React.FormEvent) => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Message sent! I'll get back to you soon.");
+    setLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert([{ name, email, message }]);
+
+      if (error) throw error;
+
+      toast.success("Message sent! I'll get back to you soon.");
+      setName("");
+      setEmail("");
+      setMessage("");
+    } catch (error: any) {
+      toast.error("Failed to send message. Please try again.");
+      console.error('Error submitting contact form:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const socialLinks = [
@@ -53,6 +78,8 @@ const Contact = () => {
                 <Input
                   placeholder="Your Name"
                   required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="glass border-primary/20 focus:border-primary bg-transparent text-foreground placeholder:text-muted-foreground"
                 />
               </div>
@@ -61,6 +88,8 @@ const Contact = () => {
                   type="email"
                   placeholder="Your Email"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="glass border-primary/20 focus:border-primary bg-transparent text-foreground placeholder:text-muted-foreground"
                 />
               </div>
@@ -69,14 +98,17 @@ const Contact = () => {
                   placeholder="Your Message"
                   required
                   rows={5}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                   className="glass border-primary/20 focus:border-primary bg-transparent text-foreground placeholder:text-muted-foreground resize-none"
                 />
               </div>
               <Button
                 type="submit"
+                disabled={loading}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold hover-glow-primary"
               >
-                Send Message
+                {loading ? 'Sending...' : 'Send Message'}
               </Button>
             </form>
           </div>
