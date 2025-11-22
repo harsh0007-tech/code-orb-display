@@ -36,8 +36,6 @@ const Contact = () => {
   };
 
   const socialLinks = [
-    { icon: Github, label: "GitHub", href: "https://github.com" },
-    { icon: Linkedin, label: "LinkedIn", href: "https://linkedin.com" },
     { icon: Twitter, label: "Twitter", href: "https://twitter.com" },
     { icon: Mail, label: "Email", href: "mailto:hello@example.com" },
   ];
