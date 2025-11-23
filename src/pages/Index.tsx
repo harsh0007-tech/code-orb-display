@@ -4,7 +4,6 @@ import About from "@/components/About";
 import TechStack from "@/components/TechStack";
 import Projects from "@/components/Projects";
 import Education from "@/components/Education";
-import Contact from "@/components/Contact";
 import BackgroundOrbs from "@/components/BackgroundOrbs";
 import FloatingCrystals from "@/components/FloatingCrystals";
 
@@ -19,7 +18,6 @@ const Index = () => {
         <About />
         <TechStack />
         <Education />
-        <Contact />
       </main>
     </div>;
 };
