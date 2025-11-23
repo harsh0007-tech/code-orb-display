@@ -13,12 +13,14 @@ const Index = () => {
       <BackgroundOrbs />
       <FloatingCrystals />
       <Navbar />
-      <Hero />
-      <Projects />
-      <About />
-      <TechStack />
-      <Education />
-      <Contact />
+      <main>
+        <Hero />
+        <Projects />
+        <About />
+        <TechStack />
+        <Education />
+        <Contact />
+      </main>
     </div>;
 };
 export default Index;
