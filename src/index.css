@@ -21,13 +21,13 @@ All colors MUST be HSL.
     --primary: 189 100% 50%;
     --primary-foreground: 0 0% 2%;
 
-    --secondary: 280 80% 60%;
+    --secondary: 280 80% 62%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 220 30% 15%;
     --muted-foreground: 0 0% 70%;
 
-    --accent: 280 80% 60%;
+    --accent: 280 80% 62%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
@@ -45,13 +45,13 @@ All colors MUST be HSL.
     --glass-blur: 16px;
 
     /* Gradient orbs */
-    --orb-purple: 280 80% 60%;
+    --orb-purple: 280 80% 62%;
     --orb-teal: 189 100% 50%;
     --orb-blue: 220 80% 50%;
 
     /* Glow effects */
     --glow-primary: 0 0 20px rgba(0, 212, 255, 0.5);
-    --glow-secondary: 0 0 20px rgba(168, 85, 247, 0.5);
+    --glow-secondary: 0 0 20px rgba(186, 90, 237, 0.5);
 
     --sidebar-background: 0 0% 3%;
     --sidebar-foreground: 0 0% 90%;
