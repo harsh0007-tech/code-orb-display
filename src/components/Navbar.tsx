@@ -1,11 +1,28 @@
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handleNavClick = (item: string) => {
+    if (item === "Contact") {
+      navigate("/contact");
+    } else {
+      if (location.pathname !== "/") {
+        navigate("/");
+        setTimeout(() => scrollToSection(item.toLowerCase().replace(" ", "-")), 100);
+      } else {
+        scrollToSection(item.toLowerCase().replace(" ", "-"));
+      }
     }
   };
 
@@ -23,7 +40,7 @@ const Navbar = () => {
             {["About", "Tech Stack", "Projects", "Contact"].map((item) => (
               <button
                 key={item}
-                onClick={() => scrollToSection(item.toLowerCase().replace(" ", "-"))}
+                onClick={() => handleNavClick(item)}
                 className="text-sm text-foreground/80 hover:text-foreground transition-colors"
               >
                 {item}
