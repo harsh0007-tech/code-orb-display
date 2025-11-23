@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Mail } from "lucide-react";
-import profileImage from "@/assets/profile.jpg";
+import profileImage from "@/assets/profile-optimized.webp";
 
 const Hero = () => {
   const scrollToSection = (id: string) => {
@@ -18,8 +18,11 @@ const Hero = () => {
             <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-primary border-blink">
               <img
                 src={profileImage}
-                alt="Profile"
+                alt="Harsh Kumar - Full Stack Web Developer Profile Picture"
                 className="w-full h-full object-cover"
+                width="128"
+                height="128"
+                loading="eager"
               />
             </div>
           </div>

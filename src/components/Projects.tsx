@@ -7,7 +7,7 @@ const Projects = () => {
       title: "E-Commerce Platform",
       description: "A full-stack e-commerce solution with real-time inventory, payment integration, and admin dashboard.",
       tags: ["React", "Node.js", "MongoDB", "Stripe"],
-      image: "https://images.unsplash.com/photo-1557821552-17105176677c?w=800&h=600&fit=crop",
+      image: "https://images.unsplash.com/photo-1557821552-17105176677c?w=400&h=300&fit=crop&fm=webp&q=80",
       live: "#",
       github: "#",
     },
@@ -15,7 +15,7 @@ const Projects = () => {
       title: "AI Task Manager",
       description: "Smart task management app powered by AI to prioritize and organize your daily workflow efficiently.",
       tags: ["TypeScript", "OpenAI", "Supabase"],
-      image: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=800&h=600&fit=crop",
+      image: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=400&h=300&fit=crop&fm=webp&q=80",
       live: "#",
       github: "#",
     },
@@ -23,7 +23,7 @@ const Projects = () => {
       title: "Social Media Dashboard",
       description: "Analytics dashboard for tracking social media performance across multiple platforms with real-time data.",
       tags: ["React", "Python", "PostgreSQL"],
-      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop",
+      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop&fm=webp&q=80",
       live: "#",
       github: "#",
     },
@@ -46,8 +46,11 @@ const Projects = () => {
               <div className="aspect-video overflow-hidden">
                 <img
                   src={project.image}
-                  alt={project.title}
+                  alt={`${project.title} - ${project.description}`}
                   className="w-full h-full object-cover"
+                  width="400"
+                  height="300"
+                  loading="lazy"
                 />
               </div>
               <div className="p-6">
