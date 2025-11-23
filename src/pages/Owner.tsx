@@ -12,6 +12,7 @@ interface ContactMessage {
   id: string;
   name: string;
   email: string;
+  mobile_number: string | null;
   message: string;
   created_at: string;
 }
@@ -417,6 +418,9 @@ const Owner = () => {
                       <div className="space-y-1 flex-1">
                         <h3 className="font-semibold text-lg text-foreground">{msg.name}</h3>
                         <p className="text-sm text-primary">{msg.email}</p>
+                        {msg.mobile_number && (
+                          <p className="text-sm text-muted-foreground">📱 {msg.mobile_number}</p>
+                        )}
                         <p className="text-xs text-muted-foreground">
                           {format(new Date(msg.created_at), 'PPpp')}
                         </p>

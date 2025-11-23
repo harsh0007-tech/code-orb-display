@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 const Contact = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -19,13 +20,14 @@ const Contact = () => {
     try {
       const { error } = await supabase
         .from('contact_messages')
-        .insert([{ name, email, message }]);
+        .insert([{ name, email, mobile_number: mobileNumber, message }]);
 
       if (error) throw error;
 
       toast.success("Message sent! I'll get back to you soon.");
       setName("");
       setEmail("");
+      setMobileNumber("");
       setMessage("");
     } catch (error: any) {
       toast.error("Failed to send message. Please try again.");
@@ -88,6 +90,15 @@ const Contact = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="glass border-primary/20 focus:border-primary bg-transparent text-foreground placeholder:text-muted-foreground"
+                />
+              </div>
+              <div>
+                <Input
+                  type="tel"
+                  placeholder="Your Mobile Number"
+                  value={mobileNumber}
+                  onChange={(e) => setMobileNumber(e.target.value)}
                   className="glass border-primary/20 focus:border-primary bg-transparent text-foreground placeholder:text-muted-foreground"
                 />
               </div>
