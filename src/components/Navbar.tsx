@@ -31,7 +31,7 @@ const Navbar = () => {
       <div className="glass rounded-full px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <button
-            onClick={() => scrollToSection("hero")}
+            onClick={() => navigate("/")}
             className="font-mono font-bold text-primary hover:text-primary/80 transition-colors"
           >
             {"<Dev />"}
