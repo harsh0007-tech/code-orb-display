@@ -1,14 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { Download, LogIn, UserCircle } from "lucide-react";
+import { Download, LogIn } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { isAdmin } = useAdminCheck();
   
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -53,17 +51,7 @@ const Navbar = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {user && isAdmin ? (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => navigate("/owner")}
-              className="rounded-full gap-2"
-            >
-              <UserCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">Dashboard</span>
-            </Button>
-          ) : !user ? (
+          {!user && (
             <Button
               size="sm"
               variant="outline"
@@ -73,7 +61,7 @@ const Navbar = () => {
               <LogIn className="w-4 h-4" />
               <span className="hidden sm:inline">Login</span>
             </Button>
-          ) : null}
+          )}
           <a
             href="/Harsh_Kumar_Resume.jpg"
             download="Harsh_Kumar_Resume.jpg"
