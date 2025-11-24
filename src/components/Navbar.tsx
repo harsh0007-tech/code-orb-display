@@ -27,7 +27,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-4xl">
+    <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-4xl">
       <div className="glass rounded-full px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <button
