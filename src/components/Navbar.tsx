@@ -1,10 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, LogIn, UserCircle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -48,18 +50,41 @@ const Navbar = () => {
             ))}
           </div>
         </div>
-        <a
-          href="/Harsh_Kumar_Resume.jpg"
-          download="Harsh_Kumar_Resume.jpg"
-        >
-          <Button
-            size="sm"
-            className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium hover-glow-primary rounded-full"
+        <div className="flex items-center gap-2">
+          {user ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate("/owner")}
+              className="rounded-full gap-2"
+            >
+              <UserCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate("/auth")}
+              className="rounded-full gap-2"
+            >
+              <LogIn className="w-4 h-4" />
+              <span className="hidden sm:inline">Login</span>
+            </Button>
+          )}
+          <a
+            href="/Harsh_Kumar_Resume.jpg"
+            download="Harsh_Kumar_Resume.jpg"
           >
-            <Download className="w-4 h-4 mr-2" />
-            Resume
-          </Button>
-        </a>
+            <Button
+              size="sm"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium hover-glow-primary rounded-full"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Resume
+            </Button>
+          </a>
+        </div>
       </div>
     </nav>
   );
