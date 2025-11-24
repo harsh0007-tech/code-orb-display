@@ -9,7 +9,7 @@ const ContactPage = () => {
       <BackgroundOrbs />
       <FloatingCrystals />
       <Navbar />
-      <main className="pt-32">
+      <main className="pt-20 pb-32">
         <Contact />
       </main>
     </div>
