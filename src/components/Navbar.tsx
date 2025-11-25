@@ -1,12 +1,24 @@
 import { Button } from "@/components/ui/button";
-import { Download, LogIn } from "lucide-react";
+import { Download, LogIn, MessageCircle, LogOut } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    });
+    navigate("/");
+  };
   
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -51,7 +63,28 @@ const Navbar = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {!user && (
+          {user ? (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => navigate("/chat")}
+                className="rounded-full gap-2"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Chat</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleLogout}
+                className="rounded-full gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Logout</span>
+              </Button>
+            </>
+          ) : (
             <Button
               size="sm"
               variant="outline"
