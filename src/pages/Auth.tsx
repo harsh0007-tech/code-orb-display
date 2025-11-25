@@ -18,7 +18,7 @@ const Auth = () => {
 
   // Redirect if already logged in
   if (user) {
-    navigate('/owner');
+    navigate('/');
     return null;
   }
 
@@ -32,7 +32,7 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/owner`
+            emailRedirectTo: `${window.location.origin}/`
           }
         });
 
@@ -55,7 +55,7 @@ const Auth = () => {
           description: 'Successfully logged in.',
         });
 
-        navigate('/owner');
+        navigate('/');
       }
     } catch (error: any) {
       toast({
@@ -74,10 +74,10 @@ const Auth = () => {
         <div className="glass rounded-2xl p-8 space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold text-foreground">
-              {isSignUp ? 'Create Account' : 'Admin Login'}
+              {isSignUp ? 'Create Account' : 'Login'}
             </h1>
             <p className="text-muted-foreground">
-              {isSignUp ? 'Sign up for a new account' : 'Sign in to access the owner panel'}
+              {isSignUp ? 'Sign up for a new account' : 'Sign in to your account'}
             </p>
           </div>
 

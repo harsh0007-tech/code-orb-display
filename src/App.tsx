@@ -12,6 +12,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Owner = lazy(() => import("./pages/Owner"));
 const Contact = lazy(() => import("./pages/Contact"));
+const Chat = lazy(() => import("./pages/Chat"));
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const AppContent = () => {
         <Route path="/auth" element={<Auth />} />
         <Route path="/owner" element={<Owner />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/chat" element={<Chat />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
