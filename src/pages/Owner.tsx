@@ -4,7 +4,7 @@ import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Shield, Mail, Trash2, TrendingUp, Users, Eye } from 'lucide-react';
+import { LogOut, Shield, Mail, Trash2, TrendingUp, Users, Eye, User } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay, startOfWeek, startOfMonth } from 'date-fns';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -34,6 +34,12 @@ interface AnalyticsStats {
   monthVisits: number;
 }
 
+interface UserProfile {
+  id: string;
+  email: string;
+  created_at: string;
+}
+
 const Owner = () => {
   const { isAdmin, loading } = useAdminCheck();
   const navigate = useNavigate();
@@ -50,11 +56,14 @@ const Owner = () => {
     monthVisits: 0,
   });
   const [openSections, setOpenSections] = useState<string[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
 
   useEffect(() => {
     if (isAdmin) {
       fetchMessages();
       fetchAnalytics();
+      fetchUsers();
     }
   }, [isAdmin]);
 
@@ -105,6 +114,22 @@ const Owner = () => {
       console.error('Error fetching analytics:', error);
     } finally {
       setAnalyticsLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setUsersLoading(false);
     }
   };
 
@@ -252,6 +277,14 @@ const Owner = () => {
               <Mail className="w-4 h-4" />
               Contact Messages
             </Button>
+            <Button
+              variant={openSections.includes("users") ? "default" : "outline"}
+              onClick={() => toggleSection("users")}
+              className="flex items-center gap-2"
+            >
+              <Users className="w-4 h-4" />
+              Users
+            </Button>
           </div>
         </div>
 
@@ -386,6 +419,50 @@ const Owner = () => {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Users Section */}
+        {openSections.includes("users") && (
+          <div className="glass rounded-2xl p-8 space-y-6 animate-fade-in">
+            <div className="flex items-center gap-3 border-b border-border pb-4">
+              <Users className="w-6 h-6 text-primary" />
+              <h2 className="text-2xl font-bold text-foreground">Registered Users</h2>
+              <span className="ml-auto text-sm text-muted-foreground">
+                {users.length} total users
+              </span>
+            </div>
+            
+            {usersLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-4 text-muted-foreground">Loading users...</p>
+              </div>
+            ) : users.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <p className="text-lg text-muted-foreground">No users yet.</p>
+                <p className="text-sm text-muted-foreground mt-2">Users who sign up will appear here.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {users.map((user) => (
+                  <div key={user.id} className="glass rounded-xl p-6 space-y-3 hover:glass-strong transition-all duration-300">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Joined {format(new Date(user.created_at), 'PP')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
