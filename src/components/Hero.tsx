@@ -33,13 +33,7 @@ const Hero = () => {
           Full Stack Web Developer & B.Tech Computer Science Student
         </p>
         
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" onClick={() => scrollToSection("projects")} className="glass-strong hover:glass text-foreground border-primary hover-glow-primary rounded-full text-lg px-8">
-            View My Work
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
-          
-        </div>
+        
       </div>
     </section>;
 };
