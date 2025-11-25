@@ -1,29 +1,21 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Mail } from "lucide-react";
 import profileImage from "@/assets/profile-optimized.webp";
-
 const Hero = () => {
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+      element.scrollIntoView({
+        behavior: "smooth"
+      });
     }
   };
-
-  return (
-    <section id="hero" className="min-h-screen flex items-center justify-center px-6 pt-20 pb-32">
+  return <section id="hero" className="min-h-screen flex items-center justify-center px-6 pt-20 pb-32">
       <div className="max-w-4xl mx-auto text-center fade-in-up">
         <div className="mb-8 flex justify-center">
           <div className="glass rounded-full p-2">
             <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-primary border-blink">
-              <img
-                src={profileImage}
-                alt="Harsh Kumar - Full Stack Web Developer Profile Picture"
-                className="w-full h-full object-cover"
-                width="128"
-                height="128"
-                loading="eager"
-              />
+              <img src={profileImage} alt="Harsh Kumar - Full Stack Web Developer Profile Picture" className="w-full h-full object-cover" width="128" height="128" loading="eager" />
             </div>
           </div>
         </div>
@@ -42,27 +34,13 @@ const Hero = () => {
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button
-            size="lg"
-            onClick={() => scrollToSection("projects")}
-            className="glass-strong hover:glass text-foreground border-primary hover-glow-primary rounded-full text-lg px-8"
-          >
+          <Button size="lg" onClick={() => scrollToSection("projects")} className="glass-strong hover:glass text-foreground border-primary hover-glow-primary rounded-full text-lg px-8">
             View My Work
             <ArrowRight className="ml-2 w-5 h-5" />
           </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => scrollToSection("contact")}
-            className="border-2 border-primary/50 hover:border-primary hover:bg-primary/10 rounded-full text-lg px-8"
-          >
-            <Mail className="mr-2 w-5 h-5" />
-            Contact Me
-          </Button>
+          
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Hero;
