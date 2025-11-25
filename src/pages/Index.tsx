@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, LogOut } from "lucide-react";
+import { MessageCircle, LogOut, LogIn } from "lucide-react";
 
 const Index = () => {
   const { user } = useAuth();
@@ -32,28 +32,40 @@ const Index = () => {
       <FloatingCrystals />
       
       {/* User buttons - top right */}
-      {user && (
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        {user ? (
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate("/chat")}
+              className="rounded-full gap-2"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">Chat</span>
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleLogout}
+              className="rounded-full gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Logout</span>
+            </Button>
+          </>
+        ) : (
           <Button
             size="sm"
             variant="outline"
-            onClick={() => navigate("/chat")}
+            onClick={() => navigate("/auth")}
             className="rounded-full gap-2"
           >
-            <MessageCircle className="w-4 h-4" />
-            <span className="hidden sm:inline">Chat</span>
+            <LogIn className="w-4 h-4" />
+            <span className="hidden sm:inline">Login</span>
           </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={handleLogout}
-            className="rounded-full gap-2"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Logout</span>
-          </Button>
-        </div>
-      )}
+        )}
+      </div>
       
       <Navbar />
       <main>
