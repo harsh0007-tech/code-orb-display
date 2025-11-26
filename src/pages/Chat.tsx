@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useChatMessages } from "@/hooks/useChatMessages";
-import Navbar from "@/components/Navbar";
+import MobileNav from "@/components/MobileNav";
 import BackgroundOrbs from "@/components/BackgroundOrbs";
 import FloatingCrystals from "@/components/FloatingCrystals";
 import ChatMessageList from "@/components/chat/ChatMessageList";
@@ -36,10 +36,8 @@ const Chat = () => {
     <div className="relative min-h-screen bg-background flex flex-col">
       <BackgroundOrbs />
       <FloatingCrystals />
-      <div className="relative z-10">
-        <Navbar position="top" />
-      </div>
-      <main className="container mx-auto px-4 pt-20 pb-4 flex-1 flex flex-col max-w-4xl">
+      <MobileNav />
+      <main className="container mx-auto px-4 pt-24 pb-4 flex-1 flex flex-col max-w-4xl">
         <div className="glass rounded-2xl flex-1 flex flex-col overflow-hidden">
           <div className="flex items-center gap-3 p-6 border-b border-border">
             <MessageCircle className="w-8 h-8 text-primary" />

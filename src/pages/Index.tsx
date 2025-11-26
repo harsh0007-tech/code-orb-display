@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import Navbar from "@/components/Navbar";
+import MobileNav from "@/components/MobileNav";
 import Hero from "@/components/Hero";
 import About from "@/components/About";
 import TechStack from "@/components/TechStack";
@@ -67,7 +67,7 @@ const Index = () => {
         )}
       </div>
       
-      <Navbar />
+      <MobileNav />
       <main>
         <Hero />
         <Projects />
