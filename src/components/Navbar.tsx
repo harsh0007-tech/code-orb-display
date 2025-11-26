@@ -3,7 +3,11 @@ import { Download, LogIn } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
-const Navbar = () => {
+interface NavbarProps {
+  position?: "top" | "bottom";
+}
+
+const Navbar = ({ position = "bottom" }: NavbarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -28,8 +32,12 @@ const Navbar = () => {
     }
   };
 
+  const positionClasses = position === "top" 
+    ? "fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-4xl"
+    : "fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-4xl";
+
   return (
-    <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-4xl">
+    <nav className={positionClasses}>
       <div className="glass rounded-full px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <button
