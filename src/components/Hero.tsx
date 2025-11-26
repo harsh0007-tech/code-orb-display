@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Mail } from "lucide-react";
-import profileImage from "@/assets/profile-256.webp";
 const Hero = () => {
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -15,7 +14,7 @@ const Hero = () => {
         <div className="mb-8 flex justify-center">
           <div className="glass rounded-full p-2">
             <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-primary border-blink">
-              <img src={profileImage} alt="Harsh Kumar - Full Stack Web Developer Profile Picture" className="w-full h-full object-cover" width="128" height="128" loading="eager" fetchPriority="high" />
+              <img src="/profile.webp" alt="Harsh Kumar - Full Stack Web Developer Profile Picture" className="w-full h-full object-cover" width="128" height="128" loading="eager" fetchPriority="high" />
             </div>
           </div>
         </div>
