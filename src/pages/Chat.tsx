@@ -1,22 +1,26 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useChatMessages } from "@/hooks/useChatMessages";
 import Navbar from "@/components/Navbar";
 import BackgroundOrbs from "@/components/BackgroundOrbs";
 import FloatingCrystals from "@/components/FloatingCrystals";
+import ChatMessageList from "@/components/chat/ChatMessageList";
+import ChatInput from "@/components/chat/ChatInput";
 import { MessageCircle } from "lucide-react";
 
 const Chat = () => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { messages, loading: messagesLoading, sendMessage, deleteMessage, uploadMedia } = useChatMessages();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       navigate("/auth");
     }
-  }, [user, loading, navigate]);
+  }, [user, authLoading, navigate]);
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -29,27 +33,29 @@ const Chat = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background flex flex-col">
       <BackgroundOrbs />
       <FloatingCrystals />
       <Navbar />
-      <main className="container mx-auto px-4 pt-8 pb-24">
-        <div className="max-w-4xl mx-auto">
-          <div className="glass rounded-2xl p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <MessageCircle className="w-8 h-8 text-primary" />
-              <h1 className="text-3xl font-bold text-foreground">Chat</h1>
-            </div>
-            <div className="text-center py-16">
-              <MessageCircle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground text-lg">
-                Chat feature coming soon!
-              </p>
-              <p className="text-muted-foreground/60 text-sm mt-2">
-                This is where you'll be able to chat and interact.
-              </p>
-            </div>
+      <main className="container mx-auto px-4 pt-8 pb-4 flex-1 flex flex-col max-w-4xl">
+        <div className="glass rounded-2xl flex-1 flex flex-col overflow-hidden">
+          <div className="flex items-center gap-3 p-6 border-b border-border">
+            <MessageCircle className="w-8 h-8 text-primary" />
+            <h1 className="text-3xl font-bold text-foreground">Chat</h1>
           </div>
+
+          {messagesLoading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <ChatMessageList messages={messages} onDelete={deleteMessage} />
+          )}
+
+          <ChatInput
+            onSendMessage={sendMessage}
+            onUploadMedia={uploadMedia}
+          />
         </div>
       </main>
     </div>
