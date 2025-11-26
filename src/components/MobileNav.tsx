@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { MoreVertical, Download, LogIn, Home, User, Code, FolderOpen, Mail } from "lucide-react";
+import { Menu, Download, LogIn, Home, User, Code, FolderOpen, Mail } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -51,7 +51,7 @@ const MobileNav = () => {
             size="icon"
             className="glass rounded-full h-12 w-12 border-border/50 hover:bg-accent/20"
           >
-            <MoreVertical className="h-5 w-5" />
+            <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-72 bg-background/95 backdrop-blur-xl border-border/50">
