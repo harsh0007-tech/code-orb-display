@@ -201,6 +201,11 @@ All colors MUST be HSL.
     box-shadow: var(--glow-secondary);
   }
 
+  /* Accessible secondary text - slightly lighter for better contrast */
+  .text-secondary-accessible {
+    color: hsl(280 80% 68%);
+  }
+
   /* Blinking border animation */
   @keyframes borderBlink {
     0%, 100% {

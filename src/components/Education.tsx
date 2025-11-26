@@ -26,16 +26,16 @@ const Education = () => {
                 algorithms, data structures, and full-stack web development.
               </p>
               <div className="flex flex-wrap gap-2">
-                <span className="text-xs px-3 py-1 rounded-full bg-secondary/10 text-secondary border border-secondary/20">
+                <span className="text-xs px-3 py-1 rounded-full bg-secondary/10 text-secondary-accessible border border-secondary/20">
                   Data Structures
                 </span>
-                <span className="text-xs px-3 py-1 rounded-full bg-secondary/10 text-secondary border border-secondary/20">
+                <span className="text-xs px-3 py-1 rounded-full bg-secondary/10 text-secondary-accessible border border-secondary/20">
                   Algorithms
                 </span>
-                <span className="text-xs px-3 py-1 rounded-full bg-secondary/10 text-secondary border border-secondary/20">
+                <span className="text-xs px-3 py-1 rounded-full bg-secondary/10 text-secondary-accessible border border-secondary/20">
                   Web Development
                 </span>
-                <span className="text-xs px-3 py-1 rounded-full bg-secondary/10 text-secondary border border-secondary/20">
+                <span className="text-xs px-3 py-1 rounded-full bg-secondary/10 text-secondary-accessible border border-secondary/20">
                   Database Systems
                 </span>
               </div>
