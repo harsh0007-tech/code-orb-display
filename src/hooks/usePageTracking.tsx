@@ -23,7 +23,7 @@ export const usePageTracking = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Track page visit
+    // Track page visit - deferred to avoid blocking critical rendering
     const trackPageVisit = async () => {
       try {
         const visitorId = getVisitorId();
@@ -44,6 +44,12 @@ export const usePageTracking = () => {
       }
     };
 
-    trackPageVisit();
+    // Defer tracking to avoid blocking critical path
+    // Use requestIdleCallback if available, otherwise setTimeout
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(() => trackPageVisit(), { timeout: 2000 });
+    } else {
+      setTimeout(trackPageVisit, 100);
+    }
   }, [location.pathname]);
 };
