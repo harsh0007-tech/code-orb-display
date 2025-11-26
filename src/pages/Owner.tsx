@@ -4,7 +4,7 @@ import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Shield, Mail, Trash2, TrendingUp, Users, Eye, User } from 'lucide-react';
+import { LogOut, Shield, Mail, Trash2, TrendingUp, Users, Eye, User, MessageCircle, Image, Video, Mic } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay, startOfWeek, startOfMonth } from 'date-fns';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -40,6 +40,16 @@ interface UserProfile {
   created_at: string;
 }
 
+interface ChatMessage {
+  id: string;
+  user_id: string;
+  content: string | null;
+  message_type: string;
+  media_url: string | null;
+  created_at: string;
+  user_email?: string;
+}
+
 const Owner = () => {
   const { isAdmin, loading } = useAdminCheck();
   const navigate = useNavigate();
@@ -58,12 +68,15 @@ const Owner = () => {
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatMessagesLoading, setChatMessagesLoading] = useState(true);
 
   useEffect(() => {
     if (isAdmin) {
       fetchMessages();
       fetchAnalytics();
       fetchUsers();
+      fetchChatMessages();
     }
   }, [isAdmin]);
 
@@ -130,6 +143,60 @@ const Owner = () => {
       console.error('Error fetching users:', error);
     } finally {
       setUsersLoading(false);
+    }
+  };
+
+  const fetchChatMessages = async () => {
+    try {
+      const { data: messagesData, error: messagesError } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (messagesError) throw messagesError;
+
+      // Get user emails for each message
+      const userIds = [...new Set((messagesData || []).map(m => m.user_id))];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .in('id', userIds);
+
+      const emailMap = new Map(profilesData?.map(p => [p.id, p.email]) || []);
+
+      const messagesWithEmails = (messagesData || []).map(msg => ({
+        ...msg,
+        user_email: emailMap.get(msg.user_id) || 'Unknown'
+      }));
+
+      setChatMessages(messagesWithEmails);
+    } catch (error) {
+      console.error('Error fetching chat messages:', error);
+    } finally {
+      setChatMessagesLoading(false);
+    }
+  };
+
+  const handleDeleteChatMessage = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setChatMessages(chatMessages.filter(msg => msg.id !== id));
+      toast({
+        title: 'Success',
+        description: 'Chat message deleted successfully.',
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete chat message.',
+      });
     }
   };
 
@@ -284,6 +351,14 @@ const Owner = () => {
             >
               <Users className="w-4 h-4" />
               Users
+            </Button>
+            <Button
+              variant={openSections.includes("chatMessages") ? "default" : "outline"}
+              onClick={() => toggleSection("chatMessages")}
+              className="flex items-center gap-2"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Received Chat Messages
             </Button>
           </div>
         </div>
@@ -513,6 +588,77 @@ const Owner = () => {
                     </div>
                     <div className="pt-3 border-t border-border">
                       <p className="text-foreground whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Chat Messages Section */}
+        {openSections.includes("chatMessages") && (
+          <div className="glass rounded-2xl p-8 space-y-6 animate-fade-in">
+            <div className="flex items-center gap-3 border-b border-border pb-4">
+              <MessageCircle className="w-6 h-6 text-primary" />
+              <h2 className="text-2xl font-bold text-foreground">Received Chat Messages</h2>
+              <span className="ml-auto text-sm text-muted-foreground">
+                {chatMessages.length} messages
+              </span>
+            </div>
+            
+            {chatMessagesLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-4 text-muted-foreground">Loading chat messages...</p>
+              </div>
+            ) : chatMessages.length === 0 ? (
+              <div className="text-center py-12">
+                <MessageCircle className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <p className="text-lg text-muted-foreground">No chat messages yet.</p>
+                <p className="text-sm text-muted-foreground mt-2">Messages from users will appear here.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {chatMessages.map((msg) => (
+                  <div key={msg.id} className="glass rounded-xl p-6 space-y-3 hover:glass-strong transition-all duration-300">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1 flex-1">
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4 text-primary" />
+                          <p className="text-sm font-medium text-foreground">{msg.user_email}</p>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {msg.message_type === 'image' && <Image className="w-3 h-3" />}
+                          {msg.message_type === 'video' && <Video className="w-3 h-3" />}
+                          {msg.message_type === 'voice' && <Mic className="w-3 h-3" />}
+                          <span className="capitalize">{msg.message_type}</span>
+                          <span>•</span>
+                          <span>{format(new Date(msg.created_at), 'PPpp')}</span>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteChatMessage(msg.id)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="pt-3 border-t border-border">
+                      {msg.content && (
+                        <p className="text-foreground whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                      )}
+                      {msg.media_url && msg.message_type === 'image' && (
+                        <img src={msg.media_url} alt="Chat image" className="max-w-md rounded-lg mt-2" />
+                      )}
+                      {msg.media_url && msg.message_type === 'video' && (
+                        <video src={msg.media_url} controls className="max-w-md rounded-lg mt-2" />
+                      )}
+                      {msg.media_url && msg.message_type === 'voice' && (
+                        <audio src={msg.media_url} controls className="mt-2 w-full max-w-md" />
+                      )}
                     </div>
                   </div>
                 ))}
