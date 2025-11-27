@@ -181,29 +181,35 @@ const Owner = () => {
     }
   };
 
-  // Group messages: user message followed by admin replies
+  // Group messages by user_id and sort chronologically
   const groupMessages = () => {
-    const groups: { userMessage: ChatMessage; adminReplies: ChatMessage[] }[] = [];
+    const groupedByUser: { [userId: string]: { messages: ChatMessage[]; userEmail: string } } = {};
     
     chatMessages.forEach((msg) => {
-      if (!msg.is_admin) {
-        // It's a user message, create a new group
-        groups.push({
-          userMessage: msg,
-          adminReplies: []
-        });
-      } else {
-        // It's an admin reply, add to the last group for this user
-        const lastGroupForUser = [...groups].reverse().find(
-          g => g.userMessage.user_id === msg.user_id
-        );
-        if (lastGroupForUser) {
-          lastGroupForUser.adminReplies.push(msg);
-        }
+      if (!groupedByUser[msg.user_id]) {
+        groupedByUser[msg.user_id] = {
+          messages: [],
+          userEmail: msg.user_email || 'Unknown User'
+        };
       }
+      groupedByUser[msg.user_id].messages.push(msg);
     });
 
-    return groups.reverse(); // Show newest first
+    // Convert to array and sort each group's messages chronologically
+    const groups = Object.entries(groupedByUser).map(([userId, data]) => ({
+      userId,
+      userEmail: data.userEmail,
+      messages: data.messages.sort((a, b) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      )
+    }));
+
+    // Sort groups by most recent message
+    return groups.sort((a, b) => {
+      const lastA = a.messages[a.messages.length - 1].created_at;
+      const lastB = b.messages[b.messages.length - 1].created_at;
+      return new Date(lastB).getTime() - new Date(lastA).getTime();
+    });
   };
 
   const handleDeleteChatMessage = async (id: string) => {
@@ -699,81 +705,72 @@ const Owner = () => {
             ) : (
               <div className="space-y-4">
                 {groupMessages().map((group) => (
-                  <div key={group.userMessage.id} className="glass rounded-xl p-6 space-y-4 hover:glass-strong transition-all duration-300">
-                    {/* User Message Header */}
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1 flex-1">
-                        <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-primary" />
-                          <p className="text-sm font-medium text-foreground">{group.userMessage.user_email}</p>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {group.userMessage.message_type === 'image' && <Image className="w-3 h-3" />}
-                          {group.userMessage.message_type === 'video' && <Video className="w-3 h-3" />}
-                          {group.userMessage.message_type === 'voice' && <Mic className="w-3 h-3" />}
-                          <span className="capitalize">{group.userMessage.message_type}</span>
-                          <span>•</span>
-                          <span>{format(new Date(group.userMessage.created_at), 'PPpp')}</span>
-                        </div>
+                  <div key={group.userId} className="glass rounded-xl p-6 space-y-4 hover:glass-strong transition-all duration-300">
+                    {/* Conversation Header */}
+                    <div className="flex items-center justify-between border-b border-border pb-3">
+                      <div className="flex items-center gap-2">
+                        <User className="w-5 h-5 text-primary" />
+                        <p className="font-medium text-foreground">{group.userEmail}</p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteChatMessage(group.userMessage.id)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        {group.messages.length} message{group.messages.length !== 1 ? 's' : ''}
+                      </span>
                     </div>
 
-                    {/* User Message Content */}
-                    <div className="border-t border-border pt-3">
-                      {group.userMessage.content && (
-                        <p className="text-foreground whitespace-pre-wrap leading-relaxed">{group.userMessage.content}</p>
-                      )}
-                      {group.userMessage.media_url && group.userMessage.message_type === 'image' && (
-                        <img src={group.userMessage.media_url} alt="Chat image" className="max-w-md rounded-lg mt-2" />
-                      )}
-                      {group.userMessage.media_url && group.userMessage.message_type === 'video' && (
-                        <video src={group.userMessage.media_url} controls className="max-w-md rounded-lg mt-2" />
-                      )}
-                      {group.userMessage.media_url && group.userMessage.message_type === 'voice' && (
-                        <audio src={group.userMessage.media_url} controls className="mt-2 w-full max-w-md" />
-                      )}
-                    </div>
-
-                    {/* Admin Replies */}
-                    {group.adminReplies.length > 0 && (
-                      <div className="space-y-3 pl-4 border-l-2 border-primary/30">
-                        {group.adminReplies.map((reply) => (
-                          <div key={reply.id} className="bg-secondary/30 rounded-lg p-4 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Shield className="w-4 h-4 text-primary" />
-                                <p className="text-sm font-medium text-primary">Admin Reply</p>
-                                <span className="text-xs text-muted-foreground">
-                                  {format(new Date(reply.created_at), 'PPpp')}
-                                </span>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDeleteChatMessage(reply.id)}
-                                className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
+                    {/* All Messages in Chronological Order */}
+                    <div className="space-y-3">
+                      {group.messages.map((message) => (
+                        <div key={message.id} className={`rounded-lg p-4 space-y-2 ${
+                          message.is_admin ? 'bg-secondary/30 border-l-2 border-primary' : 'bg-card'
+                        }`}>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-sm">
+                              {message.is_admin ? (
+                                <>
+                                  <Shield className="w-4 h-4 text-primary" />
+                                  <span className="font-medium text-primary">Admin Reply</span>
+                                </>
+                              ) : (
+                                <>
+                                  {message.message_type === 'image' && <Image className="w-4 h-4 text-muted-foreground" />}
+                                  {message.message_type === 'video' && <Video className="w-4 h-4 text-muted-foreground" />}
+                                  {message.message_type === 'voice' && <Mic className="w-4 h-4 text-muted-foreground" />}
+                                  {message.message_type === 'text' && <MessageCircle className="w-4 h-4 text-muted-foreground" />}
+                                  <span className="text-muted-foreground capitalize">{message.message_type}</span>
+                                </>
+                              )}
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(message.created_at), 'PPpp')}
+                              </span>
                             </div>
-                            {reply.content && (
-                              <p className="text-foreground whitespace-pre-wrap leading-relaxed text-sm">{reply.content}</p>
-                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteChatMessage(message.id)}
+                              className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
                           </div>
-                        ))}
-                      </div>
-                    )}
+                          
+                          {message.content && (
+                            <p className="text-foreground whitespace-pre-wrap leading-relaxed text-sm">{message.content}</p>
+                          )}
+                          {message.media_url && message.message_type === 'image' && (
+                            <img src={message.media_url} alt="Chat image" className="max-w-md rounded-lg mt-2" />
+                          )}
+                          {message.media_url && message.message_type === 'video' && (
+                            <video src={message.media_url} controls className="max-w-md rounded-lg mt-2" />
+                          )}
+                          {message.media_url && message.message_type === 'voice' && (
+                            <audio src={message.media_url} controls className="mt-2 w-full max-w-md" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
                     
                     {/* Reply Section */}
-                    {replyingTo === group.userMessage.id ? (
+                    {replyingTo === group.userId ? (
                       <div className="pt-3 space-y-2 border-t border-border">
                         <Textarea
                           placeholder="Type your reply..."
@@ -783,7 +780,7 @@ const Owner = () => {
                         />
                         <div className="flex gap-2">
                           <Button
-                            onClick={() => handleReplyToMessage(group.userMessage.user_id, group.userMessage.user_email || 'Unknown')}
+                            onClick={() => handleReplyToMessage(group.userId, group.userEmail)}
                             size="sm"
                             className="flex items-center gap-2"
                           >
@@ -805,7 +802,7 @@ const Owner = () => {
                     ) : (
                       <div className="pt-3 border-t border-border">
                         <Button
-                          onClick={() => setReplyingTo(group.userMessage.id)}
+                          onClick={() => setReplyingTo(group.userId)}
                           size="sm"
                           variant="outline"
                           className="flex items-center gap-2"
