@@ -155,7 +155,7 @@ const Owner = () => {
       const { data: messagesData, error: messagesError } = await supabase
         .from('chat_messages')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true }); // Changed to ascending for proper grouping
 
       if (messagesError) throw messagesError;
 
@@ -179,6 +179,31 @@ const Owner = () => {
     } finally {
       setChatMessagesLoading(false);
     }
+  };
+
+  // Group messages: user message followed by admin replies
+  const groupMessages = () => {
+    const groups: { userMessage: ChatMessage; adminReplies: ChatMessage[] }[] = [];
+    
+    chatMessages.forEach((msg) => {
+      if (!msg.is_admin) {
+        // It's a user message, create a new group
+        groups.push({
+          userMessage: msg,
+          adminReplies: []
+        });
+      } else {
+        // It's an admin reply, add to the last group for this user
+        const lastGroupForUser = [...groups].reverse().find(
+          g => g.userMessage.user_id === msg.user_id
+        );
+        if (lastGroupForUser) {
+          lastGroupForUser.adminReplies.push(msg);
+        }
+      }
+    });
+
+    return groups.reverse(); // Show newest first
   };
 
   const handleDeleteChatMessage = async (id: string) => {
@@ -234,7 +259,7 @@ const Owner = () => {
         user_email: userEmail,
         is_admin: true,
       };
-      setChatMessages([newMessage, ...chatMessages]);
+      setChatMessages([...chatMessages, newMessage]);
 
       toast({
         title: 'Success',
@@ -673,59 +698,83 @@ const Owner = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {chatMessages.map((msg) => (
-                  <div key={msg.id} className="glass rounded-xl p-6 space-y-3 hover:glass-strong transition-all duration-300">
-                     <div className="flex items-start justify-between">
+                {groupMessages().map((group) => (
+                  <div key={group.userMessage.id} className="glass rounded-xl p-6 space-y-4 hover:glass-strong transition-all duration-300">
+                    {/* User Message Header */}
+                    <div className="flex items-start justify-between">
                       <div className="space-y-1 flex-1">
                         <div className="flex items-center gap-2">
-                          {msg.is_admin ? (
-                            <>
-                              <Shield className="w-4 h-4 text-primary" />
-                              <p className="text-sm font-medium text-primary">Admin Reply</p>
-                            </>
-                          ) : (
-                            <>
-                              <User className="w-4 h-4 text-primary" />
-                              <p className="text-sm font-medium text-foreground">{msg.user_email}</p>
-                            </>
-                          )}
+                          <User className="w-4 h-4 text-primary" />
+                          <p className="text-sm font-medium text-foreground">{group.userMessage.user_email}</p>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {msg.message_type === 'image' && <Image className="w-3 h-3" />}
-                          {msg.message_type === 'video' && <Video className="w-3 h-3" />}
-                          {msg.message_type === 'voice' && <Mic className="w-3 h-3" />}
-                          <span className="capitalize">{msg.message_type}</span>
+                          {group.userMessage.message_type === 'image' && <Image className="w-3 h-3" />}
+                          {group.userMessage.message_type === 'video' && <Video className="w-3 h-3" />}
+                          {group.userMessage.message_type === 'voice' && <Mic className="w-3 h-3" />}
+                          <span className="capitalize">{group.userMessage.message_type}</span>
                           <span>•</span>
-                          <span>{format(new Date(msg.created_at), 'PPpp')}</span>
+                          <span>{format(new Date(group.userMessage.created_at), 'PPpp')}</span>
                         </div>
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDeleteChatMessage(msg.id)}
+                        onClick={() => handleDeleteChatMessage(group.userMessage.id)}
                         className="text-destructive hover:text-destructive hover:bg-destructive/10"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
-                     <div className="pt-3 border-t border-border">
-                      {msg.content && (
-                        <p className="text-foreground whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+
+                    {/* User Message Content */}
+                    <div className="border-t border-border pt-3">
+                      {group.userMessage.content && (
+                        <p className="text-foreground whitespace-pre-wrap leading-relaxed">{group.userMessage.content}</p>
                       )}
-                      {msg.media_url && msg.message_type === 'image' && (
-                        <img src={msg.media_url} alt="Chat image" className="max-w-md rounded-lg mt-2" />
+                      {group.userMessage.media_url && group.userMessage.message_type === 'image' && (
+                        <img src={group.userMessage.media_url} alt="Chat image" className="max-w-md rounded-lg mt-2" />
                       )}
-                      {msg.media_url && msg.message_type === 'video' && (
-                        <video src={msg.media_url} controls className="max-w-md rounded-lg mt-2" />
+                      {group.userMessage.media_url && group.userMessage.message_type === 'video' && (
+                        <video src={group.userMessage.media_url} controls className="max-w-md rounded-lg mt-2" />
                       )}
-                      {msg.media_url && msg.message_type === 'voice' && (
-                        <audio src={msg.media_url} controls className="mt-2 w-full max-w-md" />
+                      {group.userMessage.media_url && group.userMessage.message_type === 'voice' && (
+                        <audio src={group.userMessage.media_url} controls className="mt-2 w-full max-w-md" />
                       )}
                     </div>
+
+                    {/* Admin Replies */}
+                    {group.adminReplies.length > 0 && (
+                      <div className="space-y-3 pl-4 border-l-2 border-primary/30">
+                        {group.adminReplies.map((reply) => (
+                          <div key={reply.id} className="bg-secondary/30 rounded-lg p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Shield className="w-4 h-4 text-primary" />
+                                <p className="text-sm font-medium text-primary">Admin Reply</p>
+                                <span className="text-xs text-muted-foreground">
+                                  {format(new Date(reply.created_at), 'PPpp')}
+                                </span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteChatMessage(reply.id)}
+                                className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
+                            {reply.content && (
+                              <p className="text-foreground whitespace-pre-wrap leading-relaxed text-sm">{reply.content}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     
                     {/* Reply Section */}
-                    {replyingTo === msg.id ? (
-                      <div className="pt-3 space-y-2">
+                    {replyingTo === group.userMessage.id ? (
+                      <div className="pt-3 space-y-2 border-t border-border">
                         <Textarea
                           placeholder="Type your reply..."
                           value={replyText}
@@ -734,7 +783,7 @@ const Owner = () => {
                         />
                         <div className="flex gap-2">
                           <Button
-                            onClick={() => handleReplyToMessage(msg.user_id, msg.user_email || 'Unknown')}
+                            onClick={() => handleReplyToMessage(group.userMessage.user_id, group.userMessage.user_email || 'Unknown')}
                             size="sm"
                             className="flex items-center gap-2"
                           >
@@ -754,9 +803,9 @@ const Owner = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className="pt-3">
+                      <div className="pt-3 border-t border-border">
                         <Button
-                          onClick={() => setReplyingTo(msg.id)}
+                          onClick={() => setReplyingTo(group.userMessage.id)}
                           size="sm"
                           variant="outline"
                           className="flex items-center gap-2"
