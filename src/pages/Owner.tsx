@@ -204,7 +204,7 @@ const Owner = () => {
     }
   };
 
-  const handleReplyToMessage = async (userId: string) => {
+  const handleReplyToMessage = async (userId: string, userEmail: string) => {
     if (!replyText.trim()) {
       toast({
         variant: 'destructive',
@@ -215,16 +215,26 @@ const Owner = () => {
     }
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('chat_messages')
         .insert({
           user_id: userId,
           content: replyText,
           message_type: 'text',
           is_admin: true,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Add the new reply to the chat messages list immediately
+      const newMessage = {
+        ...data,
+        user_email: userEmail,
+        is_admin: true,
+      };
+      setChatMessages([newMessage, ...chatMessages]);
 
       toast({
         title: 'Success',
@@ -233,7 +243,6 @@ const Owner = () => {
       
       setReplyText('');
       setReplyingTo(null);
-      fetchChatMessages(); // Refresh messages
     } catch (error) {
       console.error('Error sending reply:', error);
       toast({
@@ -666,11 +675,20 @@ const Owner = () => {
               <div className="space-y-4">
                 {chatMessages.map((msg) => (
                   <div key={msg.id} className="glass rounded-xl p-6 space-y-3 hover:glass-strong transition-all duration-300">
-                    <div className="flex items-start justify-between">
+                     <div className="flex items-start justify-between">
                       <div className="space-y-1 flex-1">
                         <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-primary" />
-                          <p className="text-sm font-medium text-foreground">{msg.user_email}</p>
+                          {msg.is_admin ? (
+                            <>
+                              <Shield className="w-4 h-4 text-primary" />
+                              <p className="text-sm font-medium text-primary">Admin Reply</p>
+                            </>
+                          ) : (
+                            <>
+                              <User className="w-4 h-4 text-primary" />
+                              <p className="text-sm font-medium text-foreground">{msg.user_email}</p>
+                            </>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           {msg.message_type === 'image' && <Image className="w-3 h-3" />}
@@ -716,7 +734,7 @@ const Owner = () => {
                         />
                         <div className="flex gap-2">
                           <Button
-                            onClick={() => handleReplyToMessage(msg.user_id)}
+                            onClick={() => handleReplyToMessage(msg.user_id, msg.user_email || 'Unknown')}
                             size="sm"
                             className="flex items-center gap-2"
                           >
