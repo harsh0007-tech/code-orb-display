@@ -59,7 +59,7 @@ const ChatMessageList = ({ messages, onDelete }: ChatMessageListProps) => {
 
   return (
     <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
-      <div className="space-y-4 py-4">
+      <div className="space-y-4 py-4 px-4">
         {messages.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
             No messages yet. Start a conversation!
@@ -71,22 +71,12 @@ const ChatMessageList = ({ messages, onDelete }: ChatMessageListProps) => {
             return (
               <div
                 key={message.id}
-                className={`group flex items-start gap-2 ${isAdmin ? 'justify-start' : 'justify-end'}`}
+                className={`flex items-end gap-2 ${isAdmin ? 'justify-start' : 'justify-end'}`}
               >
-                {!isAdmin && (
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                    onClick={() => onDelete(message.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                )}
                 <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${
                   isAdmin 
-                    ? 'bg-secondary text-secondary-foreground rounded-bl-md' 
-                    : 'bg-primary text-primary-foreground rounded-br-md'
+                    ? 'bg-secondary text-secondary-foreground rounded-bl-sm' 
+                    : 'bg-primary text-primary-foreground rounded-br-sm'
                 }`}>
                   {isAdmin && (
                     <span className="text-xs font-semibold block mb-1 opacity-70">
@@ -117,6 +107,16 @@ const ChatMessageList = ({ messages, onDelete }: ChatMessageListProps) => {
                     {formatTime(message.created_at)}
                   </span>
                 </div>
+                {!isAdmin && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="opacity-0 hover:opacity-100 transition-opacity h-8 w-8 mb-1"
+                    onClick={() => onDelete(message.id)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                )}
               </div>
             );
           })
