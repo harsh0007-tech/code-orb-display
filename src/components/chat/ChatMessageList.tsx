@@ -65,46 +65,61 @@ const ChatMessageList = ({ messages, onDelete }: ChatMessageListProps) => {
             No messages yet. Start a conversation!
           </div>
         ) : (
-          messages.map((message) => (
-            <div
-              key={message.id}
-              className="group flex items-start gap-2 justify-end"
-            >
-              <Button
-                size="icon"
-                variant="ghost"
-                className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                onClick={() => onDelete(message.id)}
+          messages.map((message) => {
+            const isAdmin = message.is_admin || false;
+            
+            return (
+              <div
+                key={message.id}
+                className={`group flex items-start gap-2 ${isAdmin ? 'justify-start' : 'justify-end'}`}
               >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
-              <div className="max-w-[70%] bg-primary text-primary-foreground rounded-2xl rounded-br-md px-4 py-2">
-                {message.message_type === "text" && (
-                  <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                {!isAdmin && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                    onClick={() => onDelete(message.id)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
                 )}
-                {message.message_type === "image" && message.media_url && (
-                  <img
-                    src={message.media_url}
-                    alt="Uploaded image"
-                    className="rounded-lg max-w-full max-h-64 object-cover"
-                  />
-                )}
-                {message.message_type === "video" && message.media_url && (
-                  <video
-                    src={message.media_url}
-                    controls
-                    className="rounded-lg max-w-full max-h-64"
-                  />
-                )}
-                {message.message_type === "voice" && message.media_url && (
-                  <AudioPlayer url={message.media_url} />
-                )}
-                <span className="text-xs opacity-70 mt-1 block">
-                  {formatTime(message.created_at)}
-                </span>
+                <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${
+                  isAdmin 
+                    ? 'bg-secondary text-secondary-foreground rounded-bl-md' 
+                    : 'bg-primary text-primary-foreground rounded-br-md'
+                }`}>
+                  {isAdmin && (
+                    <span className="text-xs font-semibold block mb-1 opacity-70">
+                      Admin
+                    </span>
+                  )}
+                  {message.message_type === "text" && (
+                    <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                  )}
+                  {message.message_type === "image" && message.media_url && (
+                    <img
+                      src={message.media_url}
+                      alt="Uploaded image"
+                      className="rounded-lg max-w-full max-h-64 object-cover"
+                    />
+                  )}
+                  {message.message_type === "video" && message.media_url && (
+                    <video
+                      src={message.media_url}
+                      controls
+                      className="rounded-lg max-w-full max-h-64"
+                    />
+                  )}
+                  {message.message_type === "voice" && message.media_url && (
+                    <AudioPlayer url={message.media_url} />
+                  )}
+                  <span className="text-xs opacity-70 mt-1 block">
+                    {formatTime(message.created_at)}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </ScrollArea>

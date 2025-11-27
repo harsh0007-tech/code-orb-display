@@ -10,6 +10,7 @@ export interface ChatMessage {
   message_type: "text" | "image" | "video" | "voice";
   media_url: string | null;
   created_at: string;
+  is_admin: boolean;
 }
 
 export const useChatMessages = () => {
