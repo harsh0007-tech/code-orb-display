@@ -4,9 +4,10 @@ import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Shield, Mail, Trash2, TrendingUp, Users, Eye, User, MessageCircle, Image, Video, Mic } from 'lucide-react';
+import { LogOut, Shield, Mail, Trash2, TrendingUp, Users, Eye, User, MessageCircle, Image, Video, Mic, Send } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay, startOfWeek, startOfMonth } from 'date-fns';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ContactMessage {
   id: string;
@@ -48,6 +49,7 @@ interface ChatMessage {
   media_url: string | null;
   created_at: string;
   user_email?: string;
+  is_admin?: boolean;
 }
 
 const Owner = () => {
@@ -70,6 +72,8 @@ const Owner = () => {
   const [usersLoading, setUsersLoading] = useState(true);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatMessagesLoading, setChatMessagesLoading] = useState(true);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState<string>('');
 
   useEffect(() => {
     if (isAdmin) {
@@ -196,6 +200,46 @@ const Owner = () => {
         variant: 'destructive',
         title: 'Error',
         description: 'Failed to delete chat message.',
+      });
+    }
+  };
+
+  const handleReplyToMessage = async (userId: string) => {
+    if (!replyText.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Reply message cannot be empty.',
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({
+          user_id: userId,
+          content: replyText,
+          message_type: 'text',
+          is_admin: true,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Reply sent successfully.',
+      });
+      
+      setReplyText('');
+      setReplyingTo(null);
+      fetchChatMessages(); // Refresh messages
+    } catch (error) {
+      console.error('Error sending reply:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to send reply.',
       });
     }
   };
@@ -646,7 +690,7 @@ const Owner = () => {
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
-                    <div className="pt-3 border-t border-border">
+                     <div className="pt-3 border-t border-border">
                       {msg.content && (
                         <p className="text-foreground whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                       )}
@@ -660,6 +704,50 @@ const Owner = () => {
                         <audio src={msg.media_url} controls className="mt-2 w-full max-w-md" />
                       )}
                     </div>
+                    
+                    {/* Reply Section */}
+                    {replyingTo === msg.id ? (
+                      <div className="pt-3 space-y-2">
+                        <Textarea
+                          placeholder="Type your reply..."
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          className="min-h-[80px]"
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => handleReplyToMessage(msg.user_id)}
+                            size="sm"
+                            className="flex items-center gap-2"
+                          >
+                            <Send className="w-4 h-4" />
+                            Send Reply
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              setReplyingTo(null);
+                              setReplyText('');
+                            }}
+                            size="sm"
+                            variant="outline"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="pt-3">
+                        <Button
+                          onClick={() => setReplyingTo(msg.id)}
+                          size="sm"
+                          variant="outline"
+                          className="flex items-center gap-2"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          Reply
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
