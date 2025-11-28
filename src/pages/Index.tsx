@@ -26,6 +26,14 @@ const Index = () => {
     });
   };
 
+  const handleChatClick = () => {
+    if (user) {
+      navigate("/chat");
+    } else {
+      navigate("/auth", { state: { redirectTo: "/chat" } });
+    }
+  };
+
   return (
     <div className="relative min-h-screen bg-background">
       <BackgroundOrbs />
@@ -33,27 +41,25 @@ const Index = () => {
       
       {/* User buttons - top right */}
       <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleChatClick}
+          className="rounded-full gap-2"
+        >
+          <MessageCircle className="w-4 h-4" />
+          <span className="hidden sm:inline">Chat</span>
+        </Button>
         {user ? (
-          <>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => navigate("/chat")}
-              className="rounded-full gap-2"
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">Chat</span>
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={handleLogout}
-              className="rounded-full gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Logout</span>
-            </Button>
-          </>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={handleLogout}
+            className="rounded-full gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Logout</span>
+          </Button>
         ) : (
           <Button
             size="sm"

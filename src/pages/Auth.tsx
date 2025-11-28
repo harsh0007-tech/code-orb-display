@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,12 +13,15 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
 
+  const redirectTo = (location.state as any)?.redirectTo || '/';
+
   // Redirect if already logged in
   if (user) {
-    navigate('/');
+    navigate(redirectTo);
     return null;
   }
 
@@ -55,7 +58,7 @@ const Auth = () => {
           description: 'Successfully logged in.',
         });
 
-        navigate('/');
+        navigate(redirectTo);
       }
     } catch (error: any) {
       toast({
