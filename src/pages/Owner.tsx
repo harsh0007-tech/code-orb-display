@@ -74,6 +74,7 @@ const Owner = () => {
   const [chatMessagesLoading, setChatMessagesLoading] = useState(true);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState<string>('');
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAdmin) {
@@ -706,20 +707,29 @@ const Owner = () => {
               <div className="space-y-4">
                 {groupMessages().map((group) => (
                   <div key={group.userId} className="glass rounded-xl p-6 space-y-4 hover:glass-strong transition-all duration-300">
-                    {/* Conversation Header */}
-                    <div className="flex items-center justify-between border-b border-border pb-3">
+                    {/* Conversation Header - Clickable */}
+                    <div 
+                      className="flex items-center justify-between pb-3 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => setExpandedUserId(expandedUserId === group.userId ? null : group.userId)}
+                    >
                       <div className="flex items-center gap-2">
                         <User className="w-5 h-5 text-primary" />
                         <p className="font-medium text-foreground">{group.userEmail}</p>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {group.messages.length} message{group.messages.length !== 1 ? 's' : ''}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-muted-foreground">
+                          {group.messages.length} message{group.messages.length !== 1 ? 's' : ''}
+                        </span>
+                        <span className="text-primary font-bold">
+                          {expandedUserId === group.userId ? '▼' : '▶'}
+                        </span>
+                      </div>
                     </div>
 
-                    {/* All Messages in Chronological Order */}
-                    <div className="space-y-3">
-                      {group.messages.map((message) => (
+                    {/* All Messages in Chronological Order - Only show if expanded */}
+                    {expandedUserId === group.userId && (
+                      <div className="space-y-3 border-t border-border pt-3">
+                        {group.messages.map((message) => (
                         <div key={message.id} className={`rounded-lg p-4 space-y-2 ${
                           message.is_admin ? 'bg-secondary/30 border-l-2 border-primary' : 'bg-card'
                         }`}>
@@ -765,12 +775,15 @@ const Owner = () => {
                           {message.media_url && message.message_type === 'voice' && (
                             <audio src={message.media_url} controls className="mt-2 w-full max-w-md" />
                           )}
-                        </div>
-                      ))}
-                    </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     
-                    {/* Reply Section */}
-                    {replyingTo === group.userId ? (
+                    {/* Reply Section - Only show if expanded */}
+                    {expandedUserId === group.userId && (
+                      <>
+                        {replyingTo === group.userId ? (
                       <div className="pt-3 space-y-2 border-t border-border">
                         <Textarea
                           placeholder="Type your reply..."
@@ -810,7 +823,9 @@ const Owner = () => {
                           <MessageCircle className="w-4 h-4" />
                           Reply
                         </Button>
-                      </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 ))}
