@@ -4,7 +4,7 @@ import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Shield, Mail, Trash2, TrendingUp, Users, Eye, User, MessageCircle, Image, Video, Mic, Send } from 'lucide-react';
+import { LogOut, Shield, Mail, Trash2, TrendingUp, Users, Eye, User, MessageCircle, Image, Video, Mic, Send, AlertCircle } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay, startOfWeek, startOfMonth } from 'date-fns';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Textarea } from '@/components/ui/textarea';
@@ -197,13 +197,20 @@ const Owner = () => {
     });
 
     // Convert to array and sort each group's messages chronologically
-    const groups = Object.entries(groupedByUser).map(([userId, data]) => ({
-      userId,
-      userEmail: data.userEmail,
-      messages: data.messages.sort((a, b) => 
+    const groups = Object.entries(groupedByUser).map(([userId, data]) => {
+      const sortedMessages = data.messages.sort((a, b) => 
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      )
-    }));
+      );
+      const lastMessage = sortedMessages[sortedMessages.length - 1];
+      const hasNewMessage = lastMessage && !lastMessage.is_admin;
+      
+      return {
+        userId,
+        userEmail: data.userEmail,
+        messages: sortedMessages,
+        hasNewMessage
+      };
+    });
 
     // Sort groups by most recent message
     return groups.sort((a, b) => {
@@ -715,6 +722,15 @@ const Owner = () => {
                       <div className="flex items-center gap-2">
                         <User className="w-5 h-5 text-primary" />
                         <p className="font-medium text-foreground">{group.userEmail}</p>
+                        {group.hasNewMessage && (
+                          <div className="relative flex items-center gap-1">
+                            <span className="relative flex h-3 w-3">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                            </span>
+                            <span className="text-xs font-semibold text-primary">New</span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-xs text-muted-foreground">
