@@ -4,7 +4,8 @@ import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Shield, Mail, Trash2, TrendingUp, Users, Eye, User, MessageCircle, Image, Video, Mic, Send, AlertCircle } from 'lucide-react';
+import { LogOut, Shield, Mail, Trash2, TrendingUp, Users, Eye, User, MessageCircle, Image, Video, Mic, Send, AlertCircle, FolderKanban, Plus, Link, ExternalLink, X, Upload } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { format, subDays, startOfDay, endOfDay, startOfWeek, startOfMonth } from 'date-fns';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Textarea } from '@/components/ui/textarea';
@@ -52,6 +53,17 @@ interface ChatMessage {
   is_admin?: boolean;
 }
 
+interface Project {
+  id: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  live_link: string | null;
+  code_link: string | null;
+  tags: string[] | null;
+  created_at: string;
+}
+
 const Owner = () => {
   const { isAdmin, loading } = useAdminCheck();
   const navigate = useNavigate();
@@ -75,6 +87,20 @@ const Owner = () => {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState<string>('');
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+  
+  // Projects state
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [showAddProject, setShowAddProject] = useState(false);
+  const [newProject, setNewProject] = useState({
+    title: '',
+    description: '',
+    live_link: '',
+    code_link: '',
+    tags: '',
+  });
+  const [projectImageFile, setProjectImageFile] = useState<File | null>(null);
+  const [uploadingProject, setUploadingProject] = useState(false);
 
   useEffect(() => {
     if (isAdmin) {
@@ -82,6 +108,7 @@ const Owner = () => {
       fetchAnalytics();
       fetchUsers();
       fetchChatMessages();
+      fetchProjects();
     }
   }, [isAdmin]);
 
@@ -156,11 +183,10 @@ const Owner = () => {
       const { data: messagesData, error: messagesError } = await supabase
         .from('chat_messages')
         .select('*')
-        .order('created_at', { ascending: true }); // Changed to ascending for proper grouping
+        .order('created_at', { ascending: true });
 
       if (messagesError) throw messagesError;
 
-      // Get user emails for each message
       const userIds = [...new Set((messagesData || []).map(m => m.user_id))];
       const { data: profilesData } = await supabase
         .from('profiles')
@@ -179,6 +205,123 @@ const Owner = () => {
       console.error('Error fetching chat messages:', error);
     } finally {
       setChatMessagesLoading(false);
+    }
+  };
+
+  const fetchProjects = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProjects(data || []);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    } finally {
+      setProjectsLoading(false);
+    }
+  };
+
+  const handleAddProject = async () => {
+    if (!newProject.title.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Project title is required.',
+      });
+      return;
+    }
+
+    setUploadingProject(true);
+    try {
+      let imageUrl = null;
+
+      if (projectImageFile) {
+        const fileExt = projectImageFile.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('project-images')
+          .upload(fileName, projectImageFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from('project-images')
+          .getPublicUrl(fileName);
+        
+        imageUrl = urlData.publicUrl;
+      }
+
+      const tagsArray = newProject.tags
+        ? newProject.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+        : null;
+
+      const { data, error } = await supabase
+        .from('projects')
+        .insert({
+          title: newProject.title,
+          description: newProject.description || null,
+          image_url: imageUrl,
+          live_link: newProject.live_link || null,
+          code_link: newProject.code_link || null,
+          tags: tagsArray,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setProjects([data, ...projects]);
+      setNewProject({ title: '', description: '', live_link: '', code_link: '', tags: '' });
+      setProjectImageFile(null);
+      setShowAddProject(false);
+      
+      toast({
+        title: 'Success',
+        description: 'Project added successfully.',
+      });
+    } catch (error) {
+      console.error('Error adding project:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to add project.',
+      });
+    } finally {
+      setUploadingProject(false);
+    }
+  };
+
+  const handleDeleteProject = async (id: string, imageUrl: string | null) => {
+    try {
+      if (imageUrl) {
+        const fileName = imageUrl.split('/').pop();
+        if (fileName) {
+          await supabase.storage.from('project-images').remove([fileName]);
+        }
+      }
+
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setProjects(projects.filter(p => p.id !== id));
+      toast({
+        title: 'Success',
+        description: 'Project deleted successfully.',
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete project.',
+      });
     }
   };
 
@@ -451,6 +594,14 @@ const Owner = () => {
             >
               <MessageCircle className="w-4 h-4" />
               Received Chat Messages
+            </Button>
+            <Button
+              variant={openSections.includes("projects") ? "default" : "outline"}
+              onClick={() => toggleSection("projects")}
+              className="flex items-center gap-2"
+            >
+              <FolderKanban className="w-4 h-4" />
+              Projects
             </Button>
           </div>
         </div>
@@ -843,6 +994,195 @@ const Owner = () => {
                         )}
                       </>
                     )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Projects Section */}
+        {openSections.includes("projects") && (
+          <div className="glass rounded-2xl p-8 space-y-6 animate-fade-in">
+            <div className="flex items-center gap-3 border-b border-border pb-4">
+              <FolderKanban className="w-6 h-6 text-primary" />
+              <h2 className="text-2xl font-bold text-foreground">Manage Projects</h2>
+              <Button
+                onClick={() => setShowAddProject(!showAddProject)}
+                size="sm"
+                variant="outline"
+                className="ml-auto flex items-center gap-2"
+              >
+                {showAddProject ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                {showAddProject ? 'Cancel' : 'Add Project'}
+              </Button>
+            </div>
+
+            {/* Add Project Form */}
+            {showAddProject && (
+              <div className="glass rounded-xl p-6 space-y-4 border border-primary/20">
+                <h3 className="font-semibold text-lg text-foreground">Add New Project</h3>
+                
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Title *</label>
+                    <Input
+                      placeholder="Project title"
+                      value={newProject.title}
+                      onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Tags (comma separated)</label>
+                    <Input
+                      placeholder="React, TypeScript, Supabase"
+                      value={newProject.tags}
+                      onChange={(e) => setNewProject({ ...newProject, tags: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Description</label>
+                  <Textarea
+                    placeholder="Project description..."
+                    value={newProject.description}
+                    onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+                    className="min-h-[100px]"
+                  />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Live Demo Link</label>
+                    <Input
+                      placeholder="https://example.com"
+                      value={newProject.live_link}
+                      onChange={(e) => setNewProject({ ...newProject, live_link: e.target.value })}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Code/GitHub Link</label>
+                    <Input
+                      placeholder="https://github.com/..."
+                      value={newProject.code_link}
+                      onChange={(e) => setNewProject({ ...newProject, code_link: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Project Image</label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border cursor-pointer hover:bg-secondary/50 transition-colors">
+                      <Upload className="w-4 h-4" />
+                      <span className="text-sm">Choose Image</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => setProjectImageFile(e.target.files?.[0] || null)}
+                      />
+                    </label>
+                    {projectImageFile && (
+                      <span className="text-sm text-muted-foreground">{projectImageFile.name}</span>
+                    )}
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleAddProject}
+                  disabled={uploadingProject}
+                  className="w-full"
+                >
+                  {uploadingProject ? 'Adding Project...' : 'Add Project'}
+                </Button>
+              </div>
+            )}
+
+            {/* Projects List */}
+            {projectsLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-4 text-muted-foreground">Loading projects...</p>
+              </div>
+            ) : projects.length === 0 ? (
+              <div className="text-center py-12">
+                <FolderKanban className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <p className="text-lg text-muted-foreground">No projects yet.</p>
+                <p className="text-sm text-muted-foreground mt-2">Add your first project to showcase your work.</p>
+              </div>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {projects.map((project) => (
+                  <div key={project.id} className="glass rounded-xl overflow-hidden hover:glass-strong transition-all duration-300">
+                    {project.image_url && (
+                      <div className="aspect-video overflow-hidden">
+                        <img
+                          src={project.image_url}
+                          alt={project.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="p-4 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <h3 className="font-semibold text-lg text-foreground">{project.title}</h3>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteProject(project.id, project.image_url)}
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      
+                      {project.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">{project.description}</p>
+                      )}
+                      
+                      {project.tags && project.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {project.tags.map((tag, idx) => (
+                            <span key={idx} className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <div className="flex gap-2 pt-2">
+                        {project.live_link && (
+                          <a
+                            href={project.live_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-xs text-primary hover:underline"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Live Demo
+                          </a>
+                        )}
+                        {project.code_link && (
+                          <a
+                            href={project.code_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-xs text-primary hover:underline"
+                          >
+                            <Link className="w-3 h-3" />
+                            Code
+                          </a>
+                        )}
+                      </div>
+                      
+                      <p className="text-xs text-muted-foreground">
+                        Added {format(new Date(project.created_at), 'PP')}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
