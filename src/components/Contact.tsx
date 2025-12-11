@@ -5,6 +5,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { Github, Linkedin, Twitter, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+
+// Input validation schema
+const contactSchema = z.object({
+  name: z.string()
+    .trim()
+    .min(1, "Name is required")
+    .max(200, "Name must be less than 200 characters"),
+  email: z.string()
+    .trim()
+    .email("Please enter a valid email address")
+    .max(255, "Email must be less than 255 characters"),
+  mobileNumber: z.string()
+    .trim()
+    .max(20, "Mobile number must be less than 20 characters")
+    .optional()
+    .or(z.literal("")),
+  message: z.string()
+    .trim()
+    .min(1, "Message is required")
+    .max(5000, "Message must be less than 5000 characters"),
+});
 
 const Contact = () => {
   const [name, setName] = useState("");
@@ -18,9 +40,22 @@ const Contact = () => {
     setLoading(true);
 
     try {
+      // Validate inputs before sending to database
+      const validatedData = contactSchema.parse({
+        name,
+        email,
+        mobileNumber,
+        message,
+      });
+
       const { error } = await supabase
         .from('contact_messages')
-        .insert([{ name, email, mobile_number: mobileNumber, message }]);
+        .insert([{ 
+          name: validatedData.name, 
+          email: validatedData.email, 
+          mobile_number: validatedData.mobileNumber || null, 
+          message: validatedData.message 
+        }]);
 
       if (error) throw error;
 
@@ -30,7 +65,12 @@ const Contact = () => {
       setMobileNumber("");
       setMessage("");
     } catch (error: any) {
-      toast.error("Failed to send message. Please try again.");
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        toast.error(firstError.message);
+      } else {
+        toast.error("Failed to send message. Please try again.");
+      }
       console.error('Error submitting contact form:', error);
     } finally {
       setLoading(false);
@@ -78,6 +118,7 @@ const Contact = () => {
                 <Input
                   placeholder="Your Name"
                   required
+                  maxLength={200}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="glass border-primary/20 focus:border-primary bg-transparent text-foreground placeholder:text-muted-foreground"
@@ -88,6 +129,7 @@ const Contact = () => {
                   type="email"
                   placeholder="Your Email"
                   required
+                  maxLength={255}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="glass border-primary/20 focus:border-primary bg-transparent text-foreground placeholder:text-muted-foreground"
@@ -97,6 +139,7 @@ const Contact = () => {
                 <Input
                   type="tel"
                   placeholder="Your Mobile Number"
+                  maxLength={20}
                   value={mobileNumber}
                   onChange={(e) => setMobileNumber(e.target.value)}
                   className="glass border-primary/20 focus:border-primary bg-transparent text-foreground placeholder:text-muted-foreground"
@@ -107,6 +150,7 @@ const Contact = () => {
                   placeholder="Your Message"
                   required
                   rows={5}
+                  maxLength={5000}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   className="glass border-primary/20 focus:border-primary bg-transparent text-foreground placeholder:text-muted-foreground resize-none"
