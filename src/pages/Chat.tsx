@@ -33,29 +33,33 @@ const Chat = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-background flex flex-col">
+    <div className="relative h-screen bg-background flex flex-col overflow-hidden">
       <BackgroundOrbs />
       <FloatingCrystals />
       <MobileNav />
-      <main className="container mx-auto px-4 pt-24 pb-4 flex-1 flex flex-col max-w-4xl">
+      <main className="container mx-auto px-4 pt-24 pb-4 flex-1 flex flex-col max-w-4xl overflow-hidden">
         <div className="glass rounded-2xl flex-1 flex flex-col overflow-hidden">
-          <div className="flex items-center gap-3 p-6 border-b border-border">
+          <div className="flex items-center gap-3 p-6 border-b border-border shrink-0">
             <MessageCircle className="w-8 h-8 text-primary" />
             <h1 className="text-3xl font-bold text-foreground">Chat</h1>
           </div>
 
-          {messagesLoading ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <ChatMessageList messages={messages} onDelete={deleteMessage} />
-          )}
+          <div className="flex-1 overflow-hidden">
+            {messagesLoading ? (
+              <div className="h-full flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <ChatMessageList messages={messages} onDelete={deleteMessage} />
+            )}
+          </div>
 
-          <ChatInput
-            onSendMessage={sendMessage}
-            onUploadMedia={uploadMedia}
-          />
+          <div className="shrink-0">
+            <ChatInput
+              onSendMessage={sendMessage}
+              onUploadMedia={uploadMedia}
+            />
+          </div>
         </div>
       </main>
     </div>
