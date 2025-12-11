@@ -58,7 +58,7 @@ const ChatMessageList = ({ messages, onDelete }: ChatMessageListProps) => {
   };
 
   return (
-    <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
+    <ScrollArea className="h-full" ref={scrollRef}>
       <div className="space-y-4 py-4 px-4">
         {messages.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
