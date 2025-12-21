@@ -17,6 +17,16 @@ interface Project {
 const Projects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<{ [key: string]: boolean }>({});
+  
+  const DESCRIPTION_LIMIT = 100;
+
+  const toggleDescription = (projectId: string) => {
+    setExpandedDescriptions(prev => ({
+      ...prev,
+      [projectId]: !prev[projectId]
+    }));
+  };
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -97,9 +107,31 @@ const Projects = () => {
               <div className="p-6">
                 <h3 className="text-xl font-bold mb-2 font-mono">{project.title}</h3>
                 {project.description && (
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {project.description}
-                  </p>
+                  <div className="text-sm text-muted-foreground mb-4">
+                    {project.description.length > DESCRIPTION_LIMIT && !expandedDescriptions[project.id] ? (
+                      <>
+                        <p>{project.description.slice(0, DESCRIPTION_LIMIT)}...</p>
+                        <button
+                          onClick={() => toggleDescription(project.id)}
+                          className="text-primary hover:underline text-xs mt-1 font-medium"
+                        >
+                          Read more
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p>{project.description}</p>
+                        {project.description.length > DESCRIPTION_LIMIT && (
+                          <button
+                            onClick={() => toggleDescription(project.id)}
+                            className="text-primary hover:underline text-xs mt-1 font-medium"
+                          >
+                            Show less
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 )}
                 {project.tags && project.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-4">
