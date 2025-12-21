@@ -4,7 +4,7 @@ import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Shield, Mail, Trash2, TrendingUp, Users, Eye, User, MessageCircle, Image, Video, Mic, Send, AlertCircle, FolderKanban, Plus, Link, ExternalLink, X, Upload } from 'lucide-react';
+import { LogOut, Shield, Mail, Trash2, TrendingUp, Users, Eye, User, MessageCircle, Image, Video, Mic, Send, AlertCircle, FolderKanban, Plus, Link, ExternalLink, X, Upload, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { format, subDays, startOfDay, endOfDay, startOfWeek, startOfMonth } from 'date-fns';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -58,6 +58,7 @@ interface Project {
   title: string;
   description: string | null;
   image_url: string | null;
+  images: string[] | null;
   live_link: string | null;
   code_link: string | null;
   tags: string[] | null;
@@ -99,8 +100,19 @@ const Owner = () => {
     code_link: '',
     tags: '',
   });
-  const [projectImageFile, setProjectImageFile] = useState<File | null>(null);
+  const [projectImageFiles, setProjectImageFiles] = useState<File[]>([]);
   const [uploadingProject, setUploadingProject] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [editProjectData, setEditProjectData] = useState({
+    title: '',
+    description: '',
+    live_link: '',
+    code_link: '',
+    tags: '',
+  });
+  const [editProjectImageFiles, setEditProjectImageFiles] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [projectImageIndex, setProjectImageIndex] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
     if (isAdmin) {
@@ -234,17 +246,27 @@ const Owner = () => {
       return;
     }
 
+    if (projectImageFiles.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'At least one project image is required.',
+      });
+      return;
+    }
+
     setUploadingProject(true);
     try {
-      let imageUrl = null;
+      const uploadedImageUrls: string[] = [];
 
-      if (projectImageFile) {
-        const fileExt = projectImageFile.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
+      // Upload all images
+      for (const file of projectImageFiles) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
           .from('project-images')
-          .upload(fileName, projectImageFile);
+          .upload(fileName, file);
 
         if (uploadError) throw uploadError;
 
@@ -252,7 +274,7 @@ const Owner = () => {
           .from('project-images')
           .getPublicUrl(fileName);
         
-        imageUrl = urlData.publicUrl;
+        uploadedImageUrls.push(urlData.publicUrl);
       }
 
       const tagsArray = newProject.tags
@@ -264,7 +286,8 @@ const Owner = () => {
         .insert({
           title: newProject.title,
           description: newProject.description || null,
-          image_url: imageUrl,
+          image_url: uploadedImageUrls[0] || null,
+          images: uploadedImageUrls,
           live_link: newProject.live_link || null,
           code_link: newProject.code_link || null,
           tags: tagsArray,
@@ -276,7 +299,7 @@ const Owner = () => {
 
       setProjects([data, ...projects]);
       setNewProject({ title: '', description: '', live_link: '', code_link: '', tags: '' });
-      setProjectImageFile(null);
+      setProjectImageFiles([]);
       setShowAddProject(false);
       
       toast({
@@ -295,12 +318,13 @@ const Owner = () => {
     }
   };
 
-  const handleDeleteProject = async (id: string, imageUrl: string | null) => {
+  const handleDeleteProject = async (id: string, images: string[] | null) => {
     try {
-      if (imageUrl) {
-        const fileName = imageUrl.split('/').pop();
-        if (fileName) {
-          await supabase.storage.from('project-images').remove([fileName]);
+      // Delete all images from storage
+      if (images && images.length > 0) {
+        const fileNames = images.map(url => url.split('/').pop()).filter(Boolean) as string[];
+        if (fileNames.length > 0) {
+          await supabase.storage.from('project-images').remove(fileNames);
         }
       }
 
@@ -323,6 +347,132 @@ const Owner = () => {
         description: 'Failed to delete project.',
       });
     }
+  };
+
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project);
+    setEditProjectData({
+      title: project.title,
+      description: project.description || '',
+      live_link: project.live_link || '',
+      code_link: project.code_link || '',
+      tags: project.tags?.join(', ') || '',
+    });
+    setExistingImages(project.images || (project.image_url ? [project.image_url] : []));
+    setEditProjectImageFiles([]);
+  };
+
+  const handleUpdateProject = async () => {
+    if (!editingProject) return;
+    
+    if (!editProjectData.title.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Project title is required.',
+      });
+      return;
+    }
+
+    if (existingImages.length === 0 && editProjectImageFiles.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'At least one project image is required.',
+      });
+      return;
+    }
+
+    setUploadingProject(true);
+    try {
+      // Upload new images
+      const newImageUrls: string[] = [];
+      for (const file of editProjectImageFiles) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('project-images')
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from('project-images')
+          .getPublicUrl(fileName);
+        
+        newImageUrls.push(urlData.publicUrl);
+      }
+
+      const allImages = [...existingImages, ...newImageUrls];
+      const tagsArray = editProjectData.tags
+        ? editProjectData.tags.split(',').map(tag => tag.trim()).filter(Boolean)
+        : null;
+
+      const { data, error } = await supabase
+        .from('projects')
+        .update({
+          title: editProjectData.title,
+          description: editProjectData.description || null,
+          image_url: allImages[0] || null,
+          images: allImages,
+          live_link: editProjectData.live_link || null,
+          code_link: editProjectData.code_link || null,
+          tags: tagsArray,
+        })
+        .eq('id', editingProject.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setProjects(projects.map(p => p.id === editingProject.id ? data : p));
+      setEditingProject(null);
+      
+      toast({
+        title: 'Success',
+        description: 'Project updated successfully.',
+      });
+    } catch (error) {
+      console.error('Error updating project:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to update project.',
+      });
+    } finally {
+      setUploadingProject(false);
+    }
+  };
+
+  const removeExistingImage = async (imageUrl: string) => {
+    // Remove from storage
+    const fileName = imageUrl.split('/').pop();
+    if (fileName) {
+      await supabase.storage.from('project-images').remove([fileName]);
+    }
+    setExistingImages(prev => prev.filter(img => img !== imageUrl));
+  };
+
+  const getProjectImages = (project: Project): string[] => {
+    if (project.images && project.images.length > 0) {
+      return project.images;
+    }
+    return project.image_url ? [project.image_url] : [];
+  };
+
+  const nextProjectImage = (projectId: string, totalImages: number) => {
+    setProjectImageIndex(prev => ({
+      ...prev,
+      [projectId]: ((prev[projectId] || 0) + 1) % totalImages
+    }));
+  };
+
+  const prevProjectImage = (projectId: string, totalImages: number) => {
+    setProjectImageIndex(prev => ({
+      ...prev,
+      [projectId]: ((prev[projectId] || 0) - 1 + totalImages) % totalImages
+    }));
   };
 
   // Group messages by user_id and sort chronologically
@@ -1074,22 +1224,46 @@ const Owner = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Project Image</label>
-                  <div className="flex items-center gap-4">
+                  <label className="text-sm font-medium text-foreground">Project Images * (at least one required)</label>
+                  <div className="flex flex-wrap items-center gap-4">
                     <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border cursor-pointer hover:bg-secondary/50 transition-colors">
                       <Upload className="w-4 h-4" />
-                      <span className="text-sm">Choose Image</span>
+                      <span className="text-sm">Choose Images</span>
                       <input
                         type="file"
                         accept="image/*"
+                        multiple
                         className="hidden"
-                        onChange={(e) => setProjectImageFile(e.target.files?.[0] || null)}
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          setProjectImageFiles(prev => [...prev, ...files]);
+                        }}
                       />
                     </label>
-                    {projectImageFile && (
-                      <span className="text-sm text-muted-foreground">{projectImageFile.name}</span>
-                    )}
+                    <span className="text-sm text-muted-foreground">
+                      {projectImageFiles.length} image(s) selected
+                    </span>
                   </div>
+                  {projectImageFiles.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {projectImageFiles.map((file, idx) => (
+                        <div key={idx} className="relative group">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Preview ${idx + 1}`}
+                            className="w-20 h-20 object-cover rounded-lg border border-border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setProjectImageFiles(prev => prev.filter((_, i) => i !== idx))}
+                            className="absolute -top-2 -right-2 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <Button
@@ -1099,6 +1273,160 @@ const Owner = () => {
                 >
                   {uploadingProject ? 'Adding Project...' : 'Add Project'}
                 </Button>
+              </div>
+            )}
+
+            {/* Edit Project Modal */}
+            {editingProject && (
+              <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="glass rounded-xl p-6 space-y-4 border border-primary/20 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-lg text-foreground">Edit Project</h3>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setEditingProject(null)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Title *</label>
+                      <Input
+                        placeholder="Project title"
+                        value={editProjectData.title}
+                        onChange={(e) => setEditProjectData({ ...editProjectData, title: e.target.value })}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Tags (comma separated)</label>
+                      <Input
+                        placeholder="React, TypeScript, Supabase"
+                        value={editProjectData.tags}
+                        onChange={(e) => setEditProjectData({ ...editProjectData, tags: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Description</label>
+                    <Textarea
+                      placeholder="Project description..."
+                      value={editProjectData.description}
+                      onChange={(e) => setEditProjectData({ ...editProjectData, description: e.target.value })}
+                      className="min-h-[100px]"
+                    />
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Live Demo Link</label>
+                      <Input
+                        placeholder="https://example.com"
+                        value={editProjectData.live_link}
+                        onChange={(e) => setEditProjectData({ ...editProjectData, live_link: e.target.value })}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Code/GitHub Link</label>
+                      <Input
+                        placeholder="https://github.com/..."
+                        value={editProjectData.code_link}
+                        onChange={(e) => setEditProjectData({ ...editProjectData, code_link: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Existing Images</label>
+                    {existingImages.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {existingImages.map((img, idx) => (
+                          <div key={idx} className="relative group">
+                            <img
+                              src={img}
+                              alt={`Existing ${idx + 1}`}
+                              className="w-20 h-20 object-cover rounded-lg border border-border"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeExistingImage(img)}
+                              className="absolute -top-2 -right-2 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No existing images</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Add More Images</label>
+                    <div className="flex flex-wrap items-center gap-4">
+                      <label className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border cursor-pointer hover:bg-secondary/50 transition-colors">
+                        <Upload className="w-4 h-4" />
+                        <span className="text-sm">Choose Images</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files || []);
+                            setEditProjectImageFiles(prev => [...prev, ...files]);
+                          }}
+                        />
+                      </label>
+                      <span className="text-sm text-muted-foreground">
+                        {editProjectImageFiles.length} new image(s) selected
+                      </span>
+                    </div>
+                    {editProjectImageFiles.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {editProjectImageFiles.map((file, idx) => (
+                          <div key={idx} className="relative group">
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={`New ${idx + 1}`}
+                              className="w-20 h-20 object-cover rounded-lg border border-border"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setEditProjectImageFiles(prev => prev.filter((_, i) => i !== idx))}
+                              className="absolute -top-2 -right-2 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setEditingProject(null)}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleUpdateProject}
+                      disabled={uploadingProject}
+                      className="flex-1"
+                    >
+                      {uploadingProject ? 'Updating...' : 'Update Project'}
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1116,75 +1444,114 @@ const Owner = () => {
               </div>
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {projects.map((project) => (
-                  <div key={project.id} className="glass rounded-xl overflow-hidden hover:glass-strong transition-all duration-300">
-                    {project.image_url && (
-                      <div className="aspect-video overflow-hidden">
-                        <img
-                          src={project.image_url}
-                          alt={project.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="p-4 space-y-3">
-                      <div className="flex items-start justify-between">
-                        <h3 className="font-semibold text-lg text-foreground">{project.title}</h3>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteProject(project.id, project.image_url)}
-                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      
-                      {project.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">{project.description}</p>
-                      )}
-                      
-                      {project.tags && project.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {project.tags.map((tag, idx) => (
-                            <span key={idx} className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary">
-                              {tag}
-                            </span>
-                          ))}
+                {projects.map((project) => {
+                  const images = getProjectImages(project);
+                  const currentIndex = projectImageIndex[project.id] || 0;
+                  
+                  return (
+                    <div key={project.id} className="glass rounded-xl overflow-hidden hover:glass-strong transition-all duration-300">
+                      {images.length > 0 && (
+                        <div className="aspect-video overflow-hidden relative group">
+                          <img
+                            src={images[currentIndex]}
+                            alt={project.title}
+                            className="w-full h-full object-cover transition-transform duration-300"
+                          />
+                          {images.length > 1 && (
+                            <>
+                              <button
+                                onClick={() => prevProjectImage(project.id, images.length)}
+                                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-background/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <ChevronLeft className="w-5 h-5" />
+                              </button>
+                              <button
+                                onClick={() => nextProjectImage(project.id, images.length)}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-background/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <ChevronRight className="w-5 h-5" />
+                              </button>
+                              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                                {images.map((_, idx) => (
+                                  <div
+                                    key={idx}
+                                    className={`w-2 h-2 rounded-full transition-colors ${idx === currentIndex ? 'bg-primary' : 'bg-background/60'}`}
+                                  />
+                                ))}
+                              </div>
+                            </>
+                          )}
                         </div>
                       )}
-                      
-                      <div className="flex gap-2 pt-2">
-                        {project.live_link && (
-                          <a
-                            href={project.live_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-xs text-primary hover:underline"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            Live Demo
-                          </a>
+                      <div className="p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="font-semibold text-lg text-foreground">{project.title}</h3>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEditProject(project)}
+                              className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteProject(project.id, images)}
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        {project.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">{project.description}</p>
                         )}
-                        {project.code_link && (
-                          <a
-                            href={project.code_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-xs text-primary hover:underline"
-                          >
-                            <Link className="w-3 h-3" />
-                            Code
-                          </a>
+                        
+                        {project.tags && project.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {project.tags.map((tag, idx) => (
+                              <span key={idx} className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
                         )}
+                        
+                        <div className="flex gap-2 pt-2">
+                          {project.live_link && (
+                            <a
+                              href={project.live_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-xs text-primary hover:underline"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              Live Demo
+                            </a>
+                          )}
+                          {project.code_link && (
+                            <a
+                              href={project.code_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-xs text-primary hover:underline"
+                            >
+                              <Link className="w-3 h-3" />
+                              Code
+                            </a>
+                          )}
+                        </div>
+                        
+                        <p className="text-xs text-muted-foreground">
+                          Added {format(new Date(project.created_at), 'PP')}
+                        </p>
                       </div>
-                      
-                      <p className="text-xs text-muted-foreground">
-                        Added {format(new Date(project.created_at), 'PP')}
-                      </p>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
