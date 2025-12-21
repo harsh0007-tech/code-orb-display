@@ -8,6 +8,7 @@ interface Project {
   title: string;
   description: string | null;
   image_url: string | null;
+  images: string[] | null;
   live_link: string | null;
   code_link: string | null;
   tags: string[] | null;
@@ -18,6 +19,7 @@ const Projects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedDescriptions, setExpandedDescriptions] = useState<{ [key: string]: boolean }>({});
+  const [imageIndexes, setImageIndexes] = useState<{ [key: string]: number }>({});
   
   const DESCRIPTION_LIMIT = 100;
 
@@ -27,6 +29,34 @@ const Projects = () => {
       [projectId]: !prev[projectId]
     }));
   };
+
+  const getProjectImages = (project: Project): string[] => {
+    if (project.images && project.images.length > 0) {
+      return project.images;
+    }
+    return project.image_url ? [project.image_url] : [];
+  };
+
+  // Auto-slide images every 2 seconds
+  useEffect(() => {
+    if (projects.length === 0) return;
+
+    const interval = setInterval(() => {
+      setImageIndexes(prev => {
+        const newIndexes = { ...prev };
+        projects.forEach(project => {
+          const images = getProjectImages(project);
+          if (images.length > 1) {
+            const currentIndex = prev[project.id] || 0;
+            newIndexes[project.id] = (currentIndex + 1) % images.length;
+          }
+        });
+        return newIndexes;
+      });
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [projects]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -94,16 +124,40 @@ const Projects = () => {
               className="glass rounded-2xl overflow-hidden hover:glass-strong transition-all duration-300 transform hover:scale-105 fade-in-up"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              {project.image_url && (
-                <div className="aspect-video overflow-hidden">
-                  <img
-                    src={project.image_url}
-                    alt={`${project.title} - ${project.description || ''}`}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              )}
+              {(() => {
+                const images = getProjectImages(project);
+                const currentIndex = imageIndexes[project.id] || 0;
+                
+                if (images.length === 0) return null;
+                
+                return (
+                  <div className="aspect-video overflow-hidden relative">
+                    {images.map((img, imgIdx) => (
+                      <img
+                        key={imgIdx}
+                        src={img}
+                        alt={`${project.title} - ${imgIdx + 1}`}
+                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
+                          imgIdx === currentIndex ? 'opacity-100' : 'opacity-0'
+                        }`}
+                        loading="lazy"
+                      />
+                    ))}
+                    {images.length > 1 && (
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                        {images.map((_, idx) => (
+                          <div
+                            key={idx}
+                            className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                              idx === currentIndex ? 'bg-primary' : 'bg-background/60'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
               <div className="p-6">
                 <h3 className="text-xl font-bold mb-2 font-mono">{project.title}</h3>
                 {project.description && (
