@@ -20,6 +20,7 @@ const Projects = () => {
   const [loading, setLoading] = useState(true);
   const [expandedDescriptions, setExpandedDescriptions] = useState<{ [key: string]: boolean }>({});
   const [imageIndexes, setImageIndexes] = useState<{ [key: string]: number }>({});
+  const [pausedProjects, setPausedProjects] = useState<{ [key: string]: boolean }>({});
   
   const DESCRIPTION_LIMIT = 100;
 
@@ -46,7 +47,7 @@ const Projects = () => {
         const newIndexes = { ...prev };
         projects.forEach(project => {
           const images = getProjectImages(project);
-          if (images.length > 1) {
+          if (images.length > 1 && !pausedProjects[project.id]) {
             const currentIndex = prev[project.id] || 0;
             newIndexes[project.id] = (currentIndex + 1) % images.length;
           }
@@ -56,7 +57,7 @@ const Projects = () => {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [projects]);
+  }, [projects, pausedProjects]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -131,7 +132,11 @@ const Projects = () => {
                 if (images.length === 0) return null;
                 
                 return (
-                  <div className="aspect-video overflow-hidden relative">
+                  <div 
+                    className="aspect-video overflow-hidden relative"
+                    onMouseEnter={() => setPausedProjects(prev => ({ ...prev, [project.id]: true }))}
+                    onMouseLeave={() => setPausedProjects(prev => ({ ...prev, [project.id]: false }))}
+                  >
                     {images.map((img, imgIdx) => (
                       <img
                         key={imgIdx}
