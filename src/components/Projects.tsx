@@ -62,12 +62,25 @@ const Projects = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const { data, error } = await supabase
-          .from('projects')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://tobjuupxhxryndweofsm.supabase.co';
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvYmp1dXB4aHhyeW5kd2VvZnNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzNTE3MTMsImV4cCI6MjA3MzkyNzcxM30.nXU7kT4FxbkCp8aGQd_Ae85Qwspop-uu_Nni9mgdSMc';
+        
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/projects?select=*&order=created_at.desc`,
+          {
+            headers: {
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`,
+              'Accept': 'application/json',
+            },
+          }
+        );
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
         setProjects(data || []);
       } catch (error) {
         console.error('Error fetching projects:', error);
