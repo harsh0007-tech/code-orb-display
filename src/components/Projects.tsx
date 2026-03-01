@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Github, FolderKanban } from "lucide-react";
+import { ExternalLink, Github, FolderKanban, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Project {
@@ -21,6 +21,7 @@ const Projects = () => {
   const [expandedDescriptions, setExpandedDescriptions] = useState<{ [key: string]: boolean }>({});
   const [imageIndexes, setImageIndexes] = useState<{ [key: string]: number }>({});
   const [pausedProjects, setPausedProjects] = useState<{ [key: string]: boolean }>({});
+  const [isPreview, setIsPreview] = useState(false);
   
   const DESCRIPTION_LIMIT = 100;
 
@@ -60,34 +61,25 @@ const Projects = () => {
   }, [projects, pausedProjects]);
 
   useEffect(() => {
-    const fetchProjects = () => {
-      // Use saved native XHR to bypass any patching by lovable.js
-      const NativeXHR = (window as any).__nativeXHR || XMLHttpRequest;
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/projects?select=*&order=created_at.desc&apikey=${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`;
-      const xhr = new NativeXHR();
-      xhr.open('GET', url, true);
-      // No custom headers - keep it a "simple request" to avoid preflight
-      
-      xhr.onload = () => {
-        try {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            const data = JSON.parse(xhr.responseText);
-            setProjects(Array.isArray(data) ? data : []);
-          } else {
-            console.error('Projects fetch failed:', xhr.status, xhr.responseText);
-          }
-        } catch (e) {
-          console.error('Error parsing projects:', e);
+    const fetchProjects = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('projects')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setProjects(data || []);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+        // Detect if we're in the Lovable preview environment
+        if (window.location.hostname.includes('lovable.app') || 
+            window.location.hostname.includes('lovableproject.com')) {
+          setIsPreview(true);
         }
+      } finally {
         setLoading(false);
-      };
-      
-      xhr.onerror = () => {
-        console.error('XHR network error fetching projects');
-        setLoading(false);
-      };
-      
-      xhr.send();
+      }
     };
 
     fetchProjects();
@@ -116,9 +108,21 @@ const Projects = () => {
             Featured <span className="text-primary">Projects</span>
           </h2>
           <div className="text-center py-12">
-            <FolderKanban className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-            <p className="text-lg text-muted-foreground">No projects yet.</p>
-            <p className="text-sm text-muted-foreground mt-2">Check back soon for featured work.</p>
+            {isPreview ? (
+              <>
+                <AlertCircle className="w-16 h-16 text-primary mx-auto mb-4 opacity-70" />
+                <p className="text-lg text-muted-foreground">Preview environment cannot load external data.</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Projects will display correctly on your <strong>published site</strong>.
+                </p>
+              </>
+            ) : (
+              <>
+                <FolderKanban className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <p className="text-lg text-muted-foreground">No projects yet.</p>
+                <p className="text-sm text-muted-foreground mt-2">Check back soon for featured work.</p>
+              </>
+            )}
           </div>
         </div>
       </section>
