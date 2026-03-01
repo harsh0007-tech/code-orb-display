@@ -61,6 +61,18 @@ const Projects = () => {
   }, [projects, pausedProjects]);
 
   useEffect(() => {
+    let didTimeout = false;
+    
+    // Timeout: if fetch hangs (preview environment), show fallback after 5s
+    const timeout = setTimeout(() => {
+      didTimeout = true;
+      if (window.location.hostname.includes('lovable.app') || 
+          window.location.hostname.includes('lovableproject.com')) {
+        setIsPreview(true);
+      }
+      setLoading(false);
+    }, 5000);
+
     const fetchProjects = async () => {
       try {
         const { data, error } = await supabase
@@ -68,21 +80,27 @@ const Projects = () => {
           .select('*')
           .order('created_at', { ascending: false });
 
+        if (didTimeout) return; // Timeout already fired
+        clearTimeout(timeout);
+
         if (error) throw error;
         setProjects(data || []);
       } catch (error) {
+        if (didTimeout) return;
+        clearTimeout(timeout);
         console.error('Error fetching projects:', error);
-        // Detect if we're in the Lovable preview environment
         if (window.location.hostname.includes('lovable.app') || 
             window.location.hostname.includes('lovableproject.com')) {
           setIsPreview(true);
         }
       } finally {
-        setLoading(false);
+        if (!didTimeout) setLoading(false);
       }
     };
 
     fetchProjects();
+
+    return () => clearTimeout(timeout);
   }, []);
 
   if (loading) {
