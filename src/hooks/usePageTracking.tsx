@@ -31,9 +31,10 @@ export const usePageTracking = () => {
         const userAgent = navigator.userAgent;
         const referrer = document.referrer || 'direct';
 
-        // Use PostgREST API directly via XHR to bypass fetch interception
+        // Use saved native XHR to bypass any patching by lovable.js
+        const NativeXHR = (window as any).__nativeXHR || XMLHttpRequest;
         const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/page_visits`;
-        const xhr = new XMLHttpRequest();
+        const xhr = new NativeXHR();
         xhr.open('POST', url, true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.setRequestHeader('apikey', import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);

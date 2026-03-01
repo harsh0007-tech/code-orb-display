@@ -27,6 +27,8 @@
 
   <body>
     <div id="root"></div>
+    <!-- Save native XHR before any scripts can patch it -->
+    <script>window.__nativeXHR = window.XMLHttpRequest;</script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

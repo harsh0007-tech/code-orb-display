@@ -61,9 +61,10 @@ const Projects = () => {
 
   useEffect(() => {
     const fetchProjects = () => {
-      // Pass apikey as query param to avoid custom headers and CORS preflight
+      // Use saved native XHR to bypass any patching by lovable.js
+      const NativeXHR = (window as any).__nativeXHR || XMLHttpRequest;
       const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/projects?select=*&order=created_at.desc&apikey=${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`;
-      const xhr = new XMLHttpRequest();
+      const xhr = new NativeXHR();
       xhr.open('GET', url, true);
       // No custom headers - keep it a "simple request" to avoid preflight
       
