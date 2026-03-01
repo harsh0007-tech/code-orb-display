@@ -60,24 +60,37 @@ const Projects = () => {
   }, [projects, pausedProjects]);
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke('supabase-proxy', {
-          body: {
-            table: 'projects',
-            method: 'SELECT',
-            select: '*',
-            order: { column: 'created_at', ascending: false },
-          },
-        });
-
-        if (error) throw error;
-        setProjects(data || []);
-      } catch (error) {
-        console.error('Error fetching projects:', error);
-      } finally {
+    const fetchProjects = () => {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/supabase-proxy`;
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', url, true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.setRequestHeader('apikey', import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
+      xhr.setRequestHeader('Authorization', `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`);
+      
+      xhr.onload = () => {
+        try {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const data = JSON.parse(xhr.responseText);
+            setProjects(Array.isArray(data) ? data : []);
+          }
+        } catch (e) {
+          console.error('Error parsing projects:', e);
+        }
         setLoading(false);
-      }
+      };
+      
+      xhr.onerror = () => {
+        console.error('XHR error fetching projects');
+        setLoading(false);
+      };
+      
+      xhr.send(JSON.stringify({
+        table: 'projects',
+        method: 'SELECT',
+        select: '*',
+        order: { column: 'created_at', ascending: false },
+      }));
     };
 
     fetchProjects();

@@ -24,28 +24,30 @@ export const usePageTracking = () => {
 
   useEffect(() => {
     // Track page visit - deferred to avoid blocking critical rendering
-    const trackPageVisit = async () => {
+    const trackPageVisit = () => {
       try {
         const visitorId = getVisitorId();
         const pagePath = location.pathname;
         const userAgent = navigator.userAgent;
         const referrer = document.referrer || 'direct';
 
-        // Use edge function proxy to bypass fetch interception
-        await supabase.functions.invoke('supabase-proxy', {
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/supabase-proxy`;
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', url, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('apikey', import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
+        xhr.setRequestHeader('Authorization', `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`);
+        xhr.send(JSON.stringify({
+          table: 'page_visits',
+          method: 'INSERT',
           body: {
-            table: 'page_visits',
-            method: 'INSERT',
-            body: {
-              visitor_id: visitorId,
-              page_path: pagePath,
-              user_agent: userAgent,
-              referrer: referrer,
-            },
+            visitor_id: visitorId,
+            page_path: pagePath,
+            user_agent: userAgent,
+            referrer: referrer,
           },
-        });
+        }));
       } catch (error) {
-        // Silently fail - don't break the app if tracking fails
         console.error('Page tracking error:', error);
       }
     };

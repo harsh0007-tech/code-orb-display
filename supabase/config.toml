@@ -1,1 +1,4 @@
 project_id = "tobjuupxhxryndweofsm"
+
+[functions.supabase-proxy]
+verify_jwt = false
