@@ -61,46 +61,55 @@ const Projects = () => {
   }, [projects, pausedProjects]);
 
   useEffect(() => {
-    let didTimeout = false;
-    
-    // Timeout: if fetch hangs (preview environment), show fallback after 5s
-    const timeout = setTimeout(() => {
-      didTimeout = true;
-      if (window.location.hostname.includes('lovable.app') || 
-          window.location.hostname.includes('lovableproject.com')) {
-        setIsPreview(true);
-      }
-      setLoading(false);
-    }, 5000);
+    const timeoutPromise = (ms: number) => new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('timeout')), ms)
+    );
 
-    const fetchProjects = async () => {
+    const fetchDirect = async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    };
+
+    const fetchViaProxy = async () => {
+      const { data, error } = await supabase.functions.invoke('supabase-proxy', {
+        body: {
+          table: 'projects',
+          method: 'SELECT',
+          select: '*',
+          order: { column: 'created_at', ascending: false },
+        },
+      });
+      if (error) throw error;
+      return Array.isArray(data) ? data : [];
+    };
+
+    const loadProjects = async () => {
       try {
-        const { data, error } = await supabase
-          .from('projects')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (didTimeout) return; // Timeout already fired
-        clearTimeout(timeout);
-
-        if (error) throw error;
-        setProjects(data || []);
-      } catch (error) {
-        if (didTimeout) return;
-        clearTimeout(timeout);
-        console.error('Error fetching projects:', error);
-        if (window.location.hostname.includes('lovable.app') || 
-            window.location.hostname.includes('lovableproject.com')) {
-          setIsPreview(true);
+        // Race direct fetch against 4s timeout
+        const data = await Promise.race([fetchDirect(), timeoutPromise(4000)]) as Project[];
+        setProjects(data);
+      } catch {
+        try {
+          // Race proxy fetch against 4s timeout
+          const data = await Promise.race([fetchViaProxy(), timeoutPromise(4000)]) as Project[];
+          setProjects(data);
+        } catch {
+          console.error('All fetch methods failed or timed out');
+          if (window.location.hostname.includes('lovable.app') || 
+              window.location.hostname.includes('lovableproject.com')) {
+            setIsPreview(true);
+          }
         }
       } finally {
-        if (!didTimeout) setLoading(false);
+        setLoading(false);
       }
     };
 
-    fetchProjects();
-
-    return () => clearTimeout(timeout);
+    loadProjects();
   }, []);
 
   if (loading) {
