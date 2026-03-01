@@ -60,31 +60,27 @@ const Projects = () => {
   }, [projects, pausedProjects]);
 
   useEffect(() => {
-    const fetchProjects = async (retries = 3) => {
-      for (let attempt = 0; attempt < retries; attempt++) {
-        try {
-          const { data, error } = await supabase
-            .from('projects')
-            .select('*')
-            .order('created_at', { ascending: false });
+    const fetchProjects = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('supabase-proxy', {
+          body: {
+            table: 'projects',
+            method: 'SELECT',
+            select: '*',
+            order: { column: 'created_at', ascending: false },
+          },
+        });
 
-          if (error) throw error;
-          setProjects(data || []);
-          setLoading(false);
-          return;
-        } catch (error) {
-          console.error(`Attempt ${attempt + 1} failed:`, error);
-          if (attempt < retries - 1) {
-            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
-          }
-        }
+        if (error) throw error;
+        setProjects(data || []);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    // Delay initial fetch to let auth/proxy settle
-    const timer = setTimeout(() => fetchProjects(), 500);
-    return () => clearTimeout(timer);
+    fetchProjects();
   }, []);
 
   if (loading) {
