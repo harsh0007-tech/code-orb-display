@@ -31,12 +31,18 @@ export const usePageTracking = () => {
         const userAgent = navigator.userAgent;
         const referrer = document.referrer || 'direct';
 
-        // Insert page visit asynchronously (fire and forget)
-        await supabase.from('page_visits').insert({
-          visitor_id: visitorId,
-          page_path: pagePath,
-          user_agent: userAgent,
-          referrer: referrer,
+        // Use edge function proxy to bypass fetch interception
+        await supabase.functions.invoke('supabase-proxy', {
+          body: {
+            table: 'page_visits',
+            method: 'INSERT',
+            body: {
+              visitor_id: visitorId,
+              page_path: pagePath,
+              user_agent: userAgent,
+              referrer: referrer,
+            },
+          },
         });
       } catch (error) {
         // Silently fail - don't break the app if tracking fails
