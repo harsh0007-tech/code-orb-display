@@ -11,6 +11,42 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // JSONP endpoint for GET requests - bypasses fetch/XHR interception
+  if (req.method === "GET") {
+    try {
+      const url = new URL(req.url);
+      const callback = url.searchParams.get("callback") || "__dataCallback";
+      const table = url.searchParams.get("table") || "projects";
+
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      const { data, error } = await supabase
+        .from(table)
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        const js = `${callback}(null, ${JSON.stringify(error.message)});`;
+        return new Response(js, {
+          headers: { ...corsHeaders, "Content-Type": "application/javascript" },
+        });
+      }
+
+      const js = `${callback}(${JSON.stringify(data)}, null);`;
+      return new Response(js, {
+        headers: { ...corsHeaders, "Content-Type": "application/javascript" },
+      });
+    } catch (error) {
+      const js = `__dataCallback(null, ${JSON.stringify(error.message)});`;
+      return new Response(js, {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/javascript" },
+      });
+    }
+  }
+
   try {
     const { table, select, order, method, body, filters } = await req.json();
 
