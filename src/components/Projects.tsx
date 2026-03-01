@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Github, FolderKanban, AlertCircle } from "lucide-react";
+import { ExternalLink, Github, FolderKanban } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Project {
@@ -21,7 +21,6 @@ const Projects = () => {
   const [expandedDescriptions, setExpandedDescriptions] = useState<{ [key: string]: boolean }>({});
   const [imageIndexes, setImageIndexes] = useState<{ [key: string]: number }>({});
   const [pausedProjects, setPausedProjects] = useState<{ [key: string]: boolean }>({});
-  const [isPreview, setIsPreview] = useState(false);
   
   const DESCRIPTION_LIMIT = 100;
 
@@ -61,55 +60,23 @@ const Projects = () => {
   }, [projects, pausedProjects]);
 
   useEffect(() => {
-    const timeoutPromise = (ms: number) => new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('timeout')), ms)
-    );
-
-    const fetchDirect = async () => {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    };
-
-    const fetchViaProxy = async () => {
-      const { data, error } = await supabase.functions.invoke('supabase-proxy', {
-        body: {
-          table: 'projects',
-          method: 'SELECT',
-          select: '*',
-          order: { column: 'created_at', ascending: false },
-        },
-      });
-      if (error) throw error;
-      return Array.isArray(data) ? data : [];
-    };
-
-    const loadProjects = async () => {
+    const fetchProjects = async () => {
       try {
-        // Race direct fetch against 4s timeout
-        const data = await Promise.race([fetchDirect(), timeoutPromise(4000)]) as Project[];
-        setProjects(data);
-      } catch {
-        try {
-          // Race proxy fetch against 4s timeout
-          const data = await Promise.race([fetchViaProxy(), timeoutPromise(4000)]) as Project[];
-          setProjects(data);
-        } catch {
-          console.error('All fetch methods failed or timed out');
-          if (window.location.hostname.includes('lovable.app') || 
-              window.location.hostname.includes('lovableproject.com')) {
-            setIsPreview(true);
-          }
-        }
+        const { data, error } = await supabase
+          .from('projects')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setProjects(data || []);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadProjects();
+    fetchProjects();
   }, []);
 
   if (loading) {
@@ -135,21 +102,9 @@ const Projects = () => {
             Featured <span className="text-primary">Projects</span>
           </h2>
           <div className="text-center py-12">
-            {isPreview ? (
-              <>
-                <AlertCircle className="w-16 h-16 text-primary mx-auto mb-4 opacity-70" />
-                <p className="text-lg text-muted-foreground">Preview environment cannot load external data.</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Projects will display correctly on your <strong>published site</strong>.
-                </p>
-              </>
-            ) : (
-              <>
-                <FolderKanban className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                <p className="text-lg text-muted-foreground">No projects yet.</p>
-                <p className="text-sm text-muted-foreground mt-2">Check back soon for featured work.</p>
-              </>
-            )}
+            <FolderKanban className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+            <p className="text-lg text-muted-foreground">No projects yet.</p>
+            <p className="text-sm text-muted-foreground mt-2">Check back soon for featured work.</p>
           </div>
         </div>
       </section>
