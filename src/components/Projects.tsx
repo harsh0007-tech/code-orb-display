@@ -61,12 +61,11 @@ const Projects = () => {
 
   useEffect(() => {
     const fetchProjects = () => {
-      // Use PostgREST API directly via XHR to bypass fetch interception
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/projects?select=*&order=created_at.desc`;
+      // Pass apikey as query param to avoid custom headers and CORS preflight
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/projects?select=*&order=created_at.desc&apikey=${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`;
       const xhr = new XMLHttpRequest();
       xhr.open('GET', url, true);
-      xhr.setRequestHeader('apikey', import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
-      xhr.setRequestHeader('Authorization', `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`);
+      // No custom headers - keep it a "simple request" to avoid preflight
       
       xhr.onload = () => {
         try {
@@ -83,7 +82,7 @@ const Projects = () => {
       };
       
       xhr.onerror = () => {
-        console.error('XHR error fetching projects, status:', xhr.status);
+        console.error('XHR network error fetching projects');
         setLoading(false);
       };
       
