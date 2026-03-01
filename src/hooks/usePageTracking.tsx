@@ -31,21 +31,19 @@ export const usePageTracking = () => {
         const userAgent = navigator.userAgent;
         const referrer = document.referrer || 'direct';
 
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/supabase-proxy`;
+        // Use PostgREST API directly via XHR to bypass fetch interception
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/page_visits`;
         const xhr = new XMLHttpRequest();
         xhr.open('POST', url, true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.setRequestHeader('apikey', import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
         xhr.setRequestHeader('Authorization', `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`);
+        xhr.setRequestHeader('Prefer', 'return=minimal');
         xhr.send(JSON.stringify({
-          table: 'page_visits',
-          method: 'INSERT',
-          body: {
-            visitor_id: visitorId,
-            page_path: pagePath,
-            user_agent: userAgent,
-            referrer: referrer,
-          },
+          visitor_id: visitorId,
+          page_path: pagePath,
+          user_agent: userAgent,
+          referrer: referrer,
         }));
       } catch (error) {
         console.error('Page tracking error:', error);
