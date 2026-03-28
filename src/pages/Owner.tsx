@@ -200,12 +200,47 @@ const Owner = () => {
       if (messagesError) throw messagesError;
 
       const userIds = [...new Set((messagesData || []).map(m => m.user_id))];
+      
+      // First try profiles table
       const { data: profilesData } = await supabase
         .from('profiles')
         .select('id, email')
         .in('id', userIds);
 
-      const emailMap = new Map(profilesData?.map(p => [p.id, p.email]) || []);
+      const emailMap = new Map<string, string>();
+      profilesData?.forEach(p => {
+        if (p.email) emailMap.set(p.id, p.email);
+      });
+
+      // For users not found in profiles, fetch from auth via edge function
+      const missingIds = userIds.filter(id => !emailMap.has(id));
+      if (missingIds.length > 0) {
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          const token = sessionData?.session?.access_token;
+          if (token) {
+            const response = await fetch(
+              `https://tobjuupxhxryndweofsm.supabase.co/functions/v1/get-user-emails`,
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user_ids: missingIds }),
+              }
+            );
+            if (response.ok) {
+              const authEmails = await response.json();
+              Object.entries(authEmails).forEach(([id, email]) => {
+                emailMap.set(id, email as string);
+              });
+            }
+          }
+        } catch (e) {
+          console.error('Error fetching user emails from auth:', e);
+        }
+      }
 
       const messagesWithEmails = (messagesData || []).map(msg => ({
         ...msg,
