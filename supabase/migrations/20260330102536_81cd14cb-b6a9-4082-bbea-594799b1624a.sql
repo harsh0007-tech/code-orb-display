@@ -1,0 +1,2 @@
+DROP POLICY "Users can insert own messages" ON public.chat_messages;
+CREATE POLICY "Users can insert own messages" ON public.chat_messages FOR INSERT TO public WITH CHECK (auth.uid() = user_id AND is_admin = false);
