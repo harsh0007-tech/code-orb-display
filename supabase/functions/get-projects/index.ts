@@ -12,13 +12,13 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     const { data, error } = await supabase
       .from('projects')
-      .select('*')
+      .select('id, title, description, image_url, images, live_link, code_link, tags, created_at')
       .order('created_at', { ascending: false })
 
     if (error) {
