@@ -1,43 +1,49 @@
 import { GraduationCap } from "lucide-react";
 
 const Education = () => {
+  const subjects = [
+    "Data Structures",
+    "Algorithms",
+    "Web Development",
+    "Database Systems",
+  ];
+
   return (
-    <section className="py-20 px-6">
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-4xl md:text-5xl font-bold mb-12 text-center font-mono fade-in-up">
+    <section className="py-16 px-6">
+      <div className="max-w-5xl mx-auto">
+        <p className="text-primary font-mono text-xs tracking-widest uppercase mb-2 text-center fade-in-up">
+          Academic background
+        </p>
+        <h2 className="text-3xl md:text-4xl font-bold mb-10 text-center font-mono fade-in-up">
           <span className="text-primary">Education</span>
         </h2>
-        
-        <div className="relative">
-          <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-primary/30"></div>
-          
-          <div className="glass rounded-2xl p-8 ml-16 fade-in-up hover:glass-strong transition-all duration-300">
-            <div className="absolute left-4 p-2 glass-strong rounded-full">
-              <GraduationCap className="w-8 h-8 text-primary" />
+
+        <div className="max-w-2xl mx-auto fade-in-up">
+          <div className="glass rounded-xl p-6 flex gap-5 items-start hover:glass-strong transition-all duration-300">
+            <div className="shrink-0 p-2.5 rounded-lg bg-primary/10 border border-primary/20">
+              <GraduationCap className="w-6 h-6 text-primary" />
             </div>
-            
             <div>
-              <h3 className="text-2xl font-bold mb-2 font-mono">
+              <h3 className="text-xl font-bold mb-1 font-mono">
                 Bachelor of Technology
               </h3>
-              <p className="text-primary font-semibold mb-2">Computer Science</p>
-              <p className="text-muted-foreground mb-4">
-                Currently pursuing B.Tech in Computer Science, focusing on modern software development, 
-                algorithms, data structures, and full-stack web development.
+              <p className="text-primary font-semibold text-sm mb-2">
+                Computer Science
               </p>
-              <div className="flex flex-wrap gap-2">
-                <span className="text-xs px-3 py-1 rounded-full bg-secondary/10 text-secondary-accessible border border-secondary/20">
-                  Data Structures
-                </span>
-                <span className="text-xs px-3 py-1 rounded-full bg-secondary/10 text-secondary-accessible border border-secondary/20">
-                  Algorithms
-                </span>
-                <span className="text-xs px-3 py-1 rounded-full bg-secondary/10 text-secondary-accessible border border-secondary/20">
-                  Web Development
-                </span>
-                <span className="text-xs px-3 py-1 rounded-full bg-secondary/10 text-secondary-accessible border border-secondary/20">
-                  Database Systems
-                </span>
+              <p className="text-muted-foreground text-sm mb-3 leading-relaxed">
+                Currently pursuing B.Tech in Computer Science, focusing on modern
+                software development, algorithms, data structures, and full-stack
+                web development.
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {subjects.map((s) => (
+                  <span
+                    key={s}
+                    className="text-[11px] px-2.5 py-0.5 rounded-full bg-secondary/10 text-secondary-accessible border border-secondary/20"
+                  >
+                    {s}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
