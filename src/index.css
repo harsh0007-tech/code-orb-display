@@ -274,6 +274,7 @@ All colors MUST be HSL.
     }
     to {
       transform: rotate(360deg);
+    }
   }
 
   @keyframes gridMove {
