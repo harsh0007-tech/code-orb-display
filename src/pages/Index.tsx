@@ -36,6 +36,14 @@ const Index = () => {
 
   return (
     <div className="relative min-h-screen bg-background">
+      {/* Animated grid background */}
+      <div className="fixed inset-0 pointer-events-none -z-5 opacity-[0.04]"
+        style={{
+          backgroundImage: `linear-gradient(hsl(var(--primary)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)`,
+          backgroundSize: '60px 60px',
+          animation: 'gridMove 20s linear infinite',
+        }}
+      />
       <BackgroundOrbs />
       <FloatingCrystals />
       
